@@ -1,6 +1,6 @@
 {
     "name": "Unified Data Foundation with Fabric",
-    "image": "mcr.microsoft.com/devcontainers/python:3.14-trixie",
+    "image": "mcr.microsoft.com/devcontainers/python:3.12-bookworm",
     "features": {
         "ghcr.io/devcontainers/features/azure-cli:1": {
             "version": "latest",
