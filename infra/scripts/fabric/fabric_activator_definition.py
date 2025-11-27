@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Fabric Activator (Reflex) Definition Update Script
+Fabric Activator (Reflex) Definition Update Module
 
-This script updates the definition of an existing Microsoft Fabric Activator (Reflex) in a specified workspace.
+This module provides activator definition update functionality for Microsoft Fabric operations.
 It loads activator configuration from a JSON file, transforms it with dynamic values, encodes it to Base64, 
 and updates the activator using the Fabric API.
 
@@ -19,16 +19,13 @@ Requirements:
     - Existing activator in the workspace
 """
 
-import os
-import sys
-import json
-import base64
 import argparse
+import base64
+import json
+import os
 import re
+import sys
 from typing import Dict, Any, Optional
-
-# Add current directory to path so we can import fabric_api
-sys.path.append(os.path.dirname(__file__))
 
 from fabric_api import FabricWorkspaceApiClient, FabricApiError
 
@@ -105,7 +102,7 @@ def transform_activator_config(activator_config: list,
                             definition['instance'] = updated_instance_str
                             
                         except Exception as e:
-                            print(f"   Warning: Could not process instance for email replacement: {e}")
+                            print(f"   Warning: {e}")
         
         if emails_updated > 0:
             print(f"   Updated {emails_updated} email token(s) in activator rules")
@@ -205,10 +202,10 @@ def update_activator_definition(workspace_id: str,
             raise Exception(f"Failed to update activator definition")
         
     except (FabricApiError, json.JSONDecodeError, FileNotFoundError) as e:
-        print(f"❌ Error in activator definition update: {e}")
+        print(f"❌ Error: {e}")
         raise
     except Exception as e:
-        print(f"❌ Unexpected error: {e}")
+        print(f"❌ Error: {e}")
         raise
 
 def main():
@@ -262,34 +259,18 @@ Examples:
     # Parse arguments
     args = parser.parse_args()
     
-    print(f"📊 Activator Definition Update Script")
-    print(f"  Workspace ID: {args.workspace_id}")
-    print(f"  Activator ID: {args.activator_id}")
-    print(f"  Activator File: {args.activator_file}")
-    print(f"  Eventstream ID: {args.eventstream_id or '(not provided)'}")
-    print(f"  Eventstream Name: {args.eventstream_name or '(preserve original)'}")
-    print(f"  Activator Alerts Email: {args.activator_alerts_email or '(not provided)'}")
-    print("=" * 60)
-    
     # Execute the main logic
-    try:
-        result = update_activator_definition(
-            workspace_id=args.workspace_id,
-            activator_id=args.activator_id,
-            activator_file_path=args.activator_file,
-            eventstream_id=args.eventstream_id,
-            eventstream_name=args.eventstream_name,
-            activator_alerts_email=args.activator_alerts_email
-        )
-        
-        print(f"\n🎉 Activator definition update completed successfully.")
-        if result:
-            print(f"Activator ID: {result.get('id')}")
-            print(f"Activator Name: {result.get('displayName')}")
-        
-    except Exception as e:
-        print(f"Error: {e}")
-        exit(1)
+    result = update_activator_definition(
+        workspace_id=args.workspace_id,
+        activator_id=args.activator_id,
+        activator_file_path=args.activator_file,
+        eventstream_id=args.eventstream_id,
+        eventstream_name=args.eventstream_name,
+        activator_alerts_email=args.activator_alerts_email
+    )
+    
+    print(f"\n✅ Activator ID: {result.get('id') if result else 'Failed'}")
+    print(f"✅ Activator Name: {result.get('displayName') if result else 'Failed'}")
 
 
 if __name__ == "__main__":

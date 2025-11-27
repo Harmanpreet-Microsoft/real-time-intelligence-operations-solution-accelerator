@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Fabric Eventstream Creation Script
+Fabric Eventstream Creation Module
 
-This script creates a Microsoft Fabric Eventstream in a specified workspace if it doesn't exist.
-It creates the eventstream with minimal configuration, and the detailed definition should be 
+This module provides Eventstream creation functionality for Microsoft Fabric operations.
+It creates the Eventstream with minimal configuration, and the detailed definition should be 
 updated using fabric_eventstream_definition.py script.
 
 Usage:
@@ -69,10 +69,10 @@ def create_eventstream(workspace_id: str,
             return eventstream_result
         
     except FabricApiError as e:
-        print(f"❌ Error in eventstream creation: {e}")
+        print(f"❌ FabricApiError ({e.status_code}): {e}")
         raise
     except Exception as e:
-        print(f"❌ Unexpected error: {e}")
+        print(f"❌ Error: {e}")
         raise
 
 def main():
@@ -105,25 +105,14 @@ Examples:
     # Parse arguments
     args = parser.parse_args()
     
-    print(f"📊 Eventstream Creation Script")
-    print(f"  Workspace ID: {args.workspace_id}")
-    print(f"  Eventstream Name: {args.eventstream_name or '(not provided)'}")
-    print("=" * 60)
-    
     # Execute the main logic
-    try:
-        result = create_eventstream(
-            workspace_id=args.workspace_id,
-            eventstream_name=args.eventstream_name
-        )
-        
-        print(f"\n🎉 Eventstream creation completed successfully.")
-        print(f"Eventstream ID: {result.get('id')}")
-        print(f"Eventstream Name: {result.get('displayName')}")
-        
-    except Exception as e:
-        print(f"Error: {e}")
-        exit(1)
+    result = create_eventstream(
+        workspace_id=args.workspace_id,
+        eventstream_name=args.eventstream_name
+    )
+    
+    print(f"\n✅ Eventstream ID: {result.get('id')}")
+    print(f"✅ Eventstream Name: {result.get('displayName')}")
 
 
 if __name__ == "__main__":

@@ -28,7 +28,7 @@ def authenticate():
         print(f"✅ Successfully authenticated Fabric API client")
         return result
     except Exception as e:
-        print(f"❌ Exception while authenticating Fabric API client: {e}")
+        print(f"❌ Error: {e}")
         return None
 
 def main():
@@ -45,27 +45,11 @@ Examples:
     # Parse arguments
     args = parser.parse_args()
     
-    # Print configuration
-    print(f"🔐 Fabric Authentication Test")
-    print("=" * 60)
+    # Execute the main logic
+    result = authenticate()
     
-    success = authenticate()
-    
-    if success:
-        print(f"\n🎉 Authentication successful!")
-        print(f"✅ Fabric API client ready for use")
-        sys.exit(0)
-    else:
-        print(f"\n💥 Authentication failed!")
-        sys.exit(1)
+    print(f"\n✅ Authentication: {'Success' if result else 'Failed'}")
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        print(f"\n⚠️  Authentication test cancelled by user")
-        sys.exit(1)
-    except Exception as e:
-        print(f"\n❌ Unexpected error: {e}")
-        sys.exit(1)
+    main()

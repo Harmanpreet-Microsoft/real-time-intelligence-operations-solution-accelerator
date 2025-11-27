@@ -45,7 +45,7 @@ from fabric_workspace import setup_workspace
 from fabric_eventhouse import setup_eventhouse  
 from fabric_database import setup_fabric_database
 from fabric_data_ingester import load_data_to_fabric
-from fabric_event_hub import setup_eventhub_connection
+from fabric_eventhub import setup_eventhub_connection
 from fabric_real_time_dashboard import setup_real_time_dashboard
 from fabric_eventstream import create_eventstream
 from fabric_activator import create_activator

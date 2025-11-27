@@ -30,7 +30,7 @@ def get_required_env_var(var_name: str) -> str:
     """
     value = os.getenv(var_name)
     if not value:
-        print(f"❌ Missing required environment variable: {var_name}")
+        print(f"❌ Missing environment variable: {var_name}")
         sys.exit(1)
     return value
 
@@ -82,6 +82,6 @@ def print_steps_summary(solution_name: str = None, solution_suffix: str = None, 
     if not any_failures and executed_steps:
         print(f"\n✨ All {len(executed_steps)} operations completed successfully!")
     elif any_failures:
-        print(f"\n💡 Some operations failed. Please check the warnings above.")
-        print(f"   You may need to fix issues and re-run the script.")
+        print(f"\n⚠️ Some operations failed. Check warnings above.")
+        print(f"   Fix issues and re-run if needed.")
     print(f"="*60)

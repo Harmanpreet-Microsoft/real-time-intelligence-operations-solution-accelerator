@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-Fabric Eventhouse Setup Script
+Fabric Eventhouse Setup Module
 
-This script creates an Eventhouse in Microsoft Fabric if it doesn't already exist.
-It uses the FabricWorkspaceApiClient to interact with the Fabric API.
+This module provides Eventhouse setup functionality for Microsoft Fabric operations.
+It creates an Eventhouse if it doesn't already exist and manages database configuration.
 
 Usage:
     python fabric_eventhouse.py --workspace-id "workspace-guid" --eventhouse-name "MyEventhouse"
-    python fabric_eventhouse.py --workspace-id "workspace-guid" --eventhouse-name "MyEventhouse" --delete-if-exists
+    python fabric_eventhouse.py --workspace-id "workspace-guid" --eventhouse-name "MyEventhouse" --database-name "MyDatabase"
 
 Requirements:
     - fabric_api.py module in the same directory
@@ -16,8 +16,8 @@ Requirements:
 """
 
 import argparse
-import sys
 import os
+import sys
 import time
 from typing import Optional, Dict, Any
 from fabric_api import FabricWorkspaceApiClient, FabricApiError
@@ -155,8 +155,11 @@ def setup_eventhouse(workspace_id: str,
             print(f"❌ Failed to create Eventhouse: {e}")
             return None
         
+    except FabricApiError as e:
+        print(f"❌ FabricApiError ({e.status_code}): {e}")
+        return None
     except Exception as e:
-        print(f"❌ Unexpected error: {e}")
+        print(f"❌ Error: {e}")
         return None
 
 def main():
@@ -189,39 +192,16 @@ Examples:
     # Parse arguments
     args = parser.parse_args()
     
-    workspace_id = args.workspace_id 
-    eventhouse_name = args.eventhouse_name 
-    database_name = args.database_name
-    
-    # Print configuration
-    print(f"🏗️  Fabric Eventhouse Setup")
-    print("=" * 60)
-    print(f"Workspace ID: {workspace_id}")
-    print(f"Eventhouse Name: {eventhouse_name}")
-    if database_name:
-        print(f"Database Name: {database_name}")
-    print("=" * 60)
-
-    success = setup_eventhouse(
-        workspace_id=workspace_id,
-        eventhouse_name=eventhouse_name,
-        database_name=database_name
+    # Execute the main logic
+    result = setup_eventhouse(
+        workspace_id=args.workspace_id,
+        eventhouse_name=args.eventhouse_name,
+        database_name=args.database_name
     )
-
-    if success:
-        print(f"\n🎉 Operation completed successfully!")
-        sys.exit(0)
-    else:
-        print(f"\n💥 Operation failed!")
-        sys.exit(1)
+    
+    print(f"\n✅ Eventhouse ID: {result.get('id') if result else 'Failed'}")
+    print(f"✅ Eventhouse Name: {result.get('displayName') if result else 'Failed'}")
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        print(f"\n⚠️  Operation cancelled by user")
-        sys.exit(1)
-    except Exception as e:
-        print(f"\n❌ Unexpected error: {e}")
-        sys.exit(1)
+    main()

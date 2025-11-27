@@ -141,7 +141,7 @@ def get_event_hub_namespace_primary_key(namespace_name: str, subscription_id: st
         return result
         
     except Exception as e:
-        print(f"❌ Error retrieving Event Hub namespace access keys: {e}")
+        print(f"❌ Error: {e}")
         raise
 
 
@@ -285,45 +285,22 @@ Examples:
     
     args = parser.parse_args()
     
-    print(f"🔌 Event Hub Connection Setup")
-    print("=" * 60)
-    print(f"Connection Name: {args.connection_name}")
-    print(f"Namespace: {args.namespace_name}")
-    print(f"Event Hub: {args.event_hub_name}")
-    print(f"Subscription ID: {args.subscription_id}")
-    print(f"Resource Group: {args.resource_group}")
-    print(f"Authorization Rule: {args.authorization_rule}")
-    print("=" * 60)
+    # Execute the main logic
+    result = setup_eventhub_connection(
+        connection_name=args.connection_name,
+        namespace_name=args.namespace_name,
+        event_hub_name=args.event_hub_name,
+        subscription_id=args.subscription_id,
+        resource_group_name=args.resource_group,
+        authorization_rule_name=args.authorization_rule
+    )
     
-    try:
-        result = setup_eventhub_connection(
-            connection_name=args.connection_name,
-            namespace_name=args.namespace_name,
-            event_hub_name=args.event_hub_name,
-            subscription_id=args.subscription_id,
-            resource_group_name=args.resource_group,
-            authorization_rule_name=args.authorization_rule
-        )
-        
-        print(f"\n🎉 Event Hub connection setup completed successfully!")
-        print(f"Connection ID: {result.get('id')}")
-        print(f"Connection Name: {result.get('displayName')}")
-        sys.exit(0)
-        
-    except Exception as e:
-        print(f"\n❌ Unexpected error: {e}")
-        sys.exit(1)
+    print(f"\n✅ Connection ID: {result.get('id')}")
+    print(f"✅ Connection Name: {result.get('displayName')}")
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        print(f"\n⚠️ Operation cancelled by user")
-        sys.exit(1)
-    except Exception as e:
-        print(f"\n❌ Unexpected error: {e}")
-        sys.exit(1)
+    main()
     EVENT_HUB_NAMESPACE = "<your-namespace>"
     EVENT_HUB_NAME = "<your-event-hub-name>"
     SUBSCRIPTION_ID = "<your-subscription-id>"
@@ -360,5 +337,5 @@ if __name__ == "__main__":
         print(f"Key Name: {keys['key_name']}")
         
     except Exception as e:
-        print(f"Error: {e}")
-        exit(1)
+        print(f"\n❌ Unexpected error: {e}")
+        sys.exit(1)

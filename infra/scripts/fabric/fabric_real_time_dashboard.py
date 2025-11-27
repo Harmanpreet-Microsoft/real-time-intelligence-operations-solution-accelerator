@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-Fabric Real-Time Dashboard Setup Script
+Fabric Real-Time Dashboard Setup Module
 
-This script creates or updates a Microsoft Fabric KQL (Real-Time) dashboard in a specified workspace.
+This module provides real-time dashboard setup functionality for Microsoft Fabric operations.
+It creates or updates a Microsoft Fabric KQL (Real-Time) dashboard in a specified workspace.
 It loads dashboard configuration from a JSON file, encodes it to Base64, and creates the dashboard
 using the Fabric API.
 
@@ -16,10 +17,10 @@ Requirements:
 """
 
 import argparse
-import json
-import sys
 import base64
+import json
 import os
+import sys
 from fabric_api import FabricWorkspaceApiClient, FabricApiError
 
 def setup_real_time_dashboard(workspace_id: str,
@@ -107,10 +108,10 @@ def setup_real_time_dashboard(workspace_id: str,
             return dashboard_result
         
     except (FabricApiError, json.JSONDecodeError, FileNotFoundError) as e:
-        print(f"❌ Error in dashboard setup: {e}")
+        print(f"❌ Error: {e}")
         raise
     except Exception as e:
-        print(f"❌ Unexpected error: {e}")
+        print(f"❌ Error: {e}")
         raise
 
 def main():
@@ -157,31 +158,17 @@ Examples:
     # Parse arguments
     args = parser.parse_args()
     
-    print(f"📊 Real-Time Dashboard Setup Script")
-    print(f"  Workspace ID: {args.workspace_id}")
-    print(f"  Dashboard Title: {args.dashboard_title}")
-    print(f"  Dashboard File: {args.dashboard_file}")
-    print(f"  Cluster URI: {args.cluster_uri}")
-    print(f"  Database ID: {args.eventhouse_database_id}")
-    print("=" * 60)
-    
     # Execute the main logic
-    try:
-        result = setup_real_time_dashboard(
-            workspace_id=args.workspace_id,
-            dashboard_title=args.dashboard_title,
-            rti_dashboard_file_path=args.dashboard_file,
-            cluster_uri=args.cluster_uri,
-            eventhouse_database_id=args.eventhouse_database_id
-        )
-        
-        print(f"\n🎉 Real-Time Dashboard setup completed successfully.")
-        print(f"Dashboard ID: {result.get('id')}")
-        print(f"Dashboard Name: {result.get('displayName')}")
-        
-    except Exception as e:
-        print(f"Error: {e}")
-        exit(1)
+    result = setup_real_time_dashboard(
+        workspace_id=args.workspace_id,
+        dashboard_title=args.dashboard_title,
+        rti_dashboard_file_path=args.dashboard_file,
+        cluster_uri=args.cluster_uri,
+        eventhouse_database_id=args.eventhouse_database_id
+    )
+    
+    print(f"\n✅ Dashboard ID: {result.get('id')}")
+    print(f"✅ Dashboard Name: {result.get('displayName')}")
 
 
 if __name__ == "__main__":

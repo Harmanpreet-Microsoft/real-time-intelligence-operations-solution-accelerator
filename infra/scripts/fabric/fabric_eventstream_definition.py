@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Fabric Eventstream Definition Update Script
+Fabric Eventstream Definition Update Module
 
-This script updates the definition of an existing Microsoft Fabric Eventstream in a specified workspace.
-It loads eventstream configuration from a JSON file, transforms it with dynamic values, encodes it to Base64, 
-and updates the eventstream using the Fabric API.
+This module provides Eventstream definition update functionality for Microsoft Fabric operations.
+It loads Eventstream configuration from a JSON file, transforms it with dynamic values, encodes it to Base64, 
+and updates the Eventstream using the Fabric API.
 
 Usage:
     python fabric_eventstream_definition.py --workspace-id "workspace-id" --eventstream-id "eventstream-id" --eventstream-file "eventstream.json"
@@ -20,10 +20,11 @@ Requirements:
 """
 
 import argparse
-import json
-import sys
 import base64
+import json
 import os
+import sys
+from typing import Dict, Any, Optional
 from fabric_api import FabricWorkspaceApiClient, FabricApiError
 
 def transform_eventstream_config(eventstream_config: dict,
@@ -259,10 +260,10 @@ def update_eventstream_definition(workspace_id: str,
             raise Exception(f"Failed to update eventstream definition")
         
     except (FabricApiError, json.JSONDecodeError, FileNotFoundError) as e:
-        print(f"❌ Error in eventstream definition update: {e}")
+        print(f"❌ Error: {e}")
         raise
     except Exception as e:
-        print(f"❌ Unexpected error: {e}")
+        print(f"❌ Error: {e}")
         raise
 
 def main():
@@ -347,46 +348,23 @@ Examples:
     # Parse arguments
     args = parser.parse_args()
     
-    print(f"📊 Eventstream Definition Update Script")
-    print(f"  Workspace ID: {args.workspace_id}")
-    print(f"  Eventstream ID: {args.eventstream_id}")
-    print(f"  Eventstream File: {args.eventstream_file}")
-    print(f"  Eventhouse Database ID: {args.eventhouse_database_id or '(not provided)'}")
-    print(f"  Database Name: {args.database_name or '(not provided)'}")
-    print(f"  EventHub Connection ID: {args.eventhub_connection_id or '(not provided)'}")
-    print(f"  Table Name: {args.table_name}")
-    print(f"  Source Name: {args.source_name or '(preserve original)'}")
-    print(f"  Eventhouse Name: {args.eventhouse_name or '(not provided)'}")
-    print(f"  Stream Name: {args.stream_name or '(preserve original)'}")
-    print(f"  Activator Name: {args.activator_name or '(not provided)'}")
-    print(f"  Activator ID: {args.activator_id or '(not provided)'}")
-    print("=" * 60)
-    
     # Execute the main logic
-    try:
-        result = update_eventstream_definition(
-            workspace_id=args.workspace_id,
-            eventstream_id=args.eventstream_id,
-            eventstream_file_path=args.eventstream_file,
-            eventhouse_database_id=args.eventhouse_database_id,
-            eventhouse_database_name=args.database_name,
-            eventhub_connection_id=args.eventhub_connection_id,
-            eventhouse_table_name=args.table_name,
-            source_name=args.source_name,
-            eventhouse_name=args.eventhouse_name,
-            stream_name=args.stream_name,
-            activator_name=args.activator_name,
-            activator_id=args.activator_id
-        )
-        
-        print(f"\n🎉 Eventstream definition update completed successfully.")
-        if result:
-            print(f"Eventstream ID: {result.get('id')}")
-            print(f"Eventstream Name: {result.get('displayName')}")
-        
-    except Exception as e:
-        print(f"Error: {e}")
-        exit(1)
+    result = update_eventstream_definition(
+        workspace_id=args.workspace_id,
+        eventstream_id=args.eventstream_id,
+        eventstream_file_path=args.eventstream_file,
+        eventhouse_database_id=args.eventhouse_database_id,
+        eventhouse_database_name=args.database_name,
+        eventhub_connection_id=args.eventhub_connection_id,
+        eventhouse_table_name=args.table_name,
+        source_name=args.source_name,
+        eventhouse_name=args.eventhouse_name,
+        stream_name=args.stream_name,
+        activator_name=args.activator_name,
+        activator_id=args.activator_id
+    )
+    
+    print(f"\n✅ Eventstream updated: {result}")
 
 
 if __name__ == "__main__":

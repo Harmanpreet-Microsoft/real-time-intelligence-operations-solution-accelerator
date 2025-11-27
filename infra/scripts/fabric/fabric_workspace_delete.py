@@ -48,28 +48,10 @@ def lookup_workspace(fabric_client: FabricApiClient, workspace_name: str):
         return result
         
     except FabricApiError as e:
-        if e.status_code == 401:
-            print(f"⚠️ WARNING: Unauthorized access to Fabric APIs")
-            print("   ⚠️ WARNING: Please review your Fabric permissions and licensing:")
-            print("   📋 Check these resources:")
-            print("   • Fabric licenses: https://learn.microsoft.com/en-us/fabric/enterprise/licenses")
-            print("   • Identity support: https://learn.microsoft.com/en-us/rest/api/fabric/articles/identity-support")
-            print("   • Create Entra app: https://learn.microsoft.com/en-us/rest/api/fabric/articles/get-started/create-entra-app")
-            print("   Solution: Ensure you have proper Fabric licensing and permissions")
-        elif e.status_code == 404:
-            print(f"WARNING: Resource not found")
-        elif e.status_code == 403:
-            print(f"⚠️ WARNING: Access denied")
-            print("   Solution: Ensure you have appropriate permissions")
-        else:
-            print(f"⚠️ WARNING: Fabric API error")
-        print(f"   Status Code: {e.status_code}")
-        print(f"   Details: {str(e)}")
-        print(f"❌ Exception while executing lookup_workspace: {e}")
+        print(f"❌ FabricApiError ({e.status_code}): {e}")
         return None
     except Exception as e:
-        print(f"WARNING: Unexpected error during workspace lookup: {str(e)}")
-        print(f"❌ Exception while executing lookup_workspace: {e}")
+        print(f"❌ Error: {e}")
         return None
 
 def delete_workspace(fabric_client: FabricApiClient, workspace_id: str):
@@ -135,58 +117,25 @@ Examples:
         print("❌ Error: Cannot specify both --workspace-name and --workspace-id")
         sys.exit(1)
     
-    # Print configuration
-    print(f"🗑️  Fabric Workspace Deletion")
-    print("=" * 60)
-    if args.workspace_name:
-        print(f"Workspace Name: {args.workspace_name}")
-    else:
-        print(f"Workspace ID: {args.workspace_id}")
-    print("=" * 60)
+    # Execute the main logic
+    fabric_client = FabricApiClient()
     
-    try:
-        # Authenticate
-        print(f"🔐 Authenticating Fabric API client...")
-        fabric_client = FabricApiClient()
-        print(f"✅ Authentication successful")
-        
-        workspace_id = args.workspace_id
-        workspace_name = args.workspace_name
-        
-        # Look up workspace if name provided
-        if workspace_name:
-            print(f"🔍 Looking up workspace by name...")
-            lookup_result = lookup_workspace(fabric_client, workspace_name)
-            if not lookup_result:
-                print(f"❌ Workspace '{workspace_name}' not found")
-                sys.exit(1)
-            workspace_id, workspace_display_name = lookup_result
-        else:
-            workspace_display_name = workspace_id
-        
-        # Delete workspace
-        print(f"🗑️  Deleting workspace...")
-        result = delete_workspace(fabric_client, workspace_id)
-        
-        if result:
-            print(f"\n🎉 Workspace deleted successfully!")
-            print(f"✅ Deleted workspace ID: {result}")
-            sys.exit(0)
-        else:
-            print(f"\n❌ Workspace deletion failed!")
+    workspace_id = args.workspace_id
+    workspace_name = args.workspace_name
+    
+    # Look up workspace if name provided
+    if workspace_name:
+        lookup_result = lookup_workspace(fabric_client, workspace_name)
+        if not lookup_result:
+            print(f"❌ Workspace '{workspace_name}' not found")
             sys.exit(1)
-            
-    except Exception as e:
-        print(f"\n❌ Unexpected error: {e}")
-        sys.exit(1)
+        workspace_id, workspace_display_name = lookup_result
+    
+    # Delete workspace
+    result = delete_workspace(fabric_client, workspace_id)
+    
+    print(f"\n✅ Deleted workspace ID: {result if result else 'Failed'}")
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        print(f"\n⚠️  Workspace deletion cancelled by user")
-        sys.exit(1)
-    except Exception as e:
-        print(f"\n❌ Unexpected error: {e}")
-        sys.exit(1)
+    main()

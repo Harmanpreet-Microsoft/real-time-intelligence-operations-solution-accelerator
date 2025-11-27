@@ -60,28 +60,10 @@ def delete_connection(fabric_client: FabricApiClient, connection_name: str):
             return None
         
     except FabricApiError as e:
-        if e.status_code == 401:
-            print(f"⚠️ WARNING: Unauthorized access to Fabric APIs")
-            print("   ⚠️ WARNING: Please review your Fabric permissions and licensing:")
-            print("   📋 Check these resources:")
-            print("   • Fabric licenses: https://learn.microsoft.com/en-us/fabric/enterprise/licenses")
-            print("   • Identity support: https://learn.microsoft.com/en-us/rest/api/fabric/articles/identity-support")
-            print("   • Create Entra app: https://learn.microsoft.com/en-us/rest/api/fabric/articles/get-started/create-entra-app")
-            print("   Solution: Ensure you have proper Fabric licensing and permissions")
-        elif e.status_code == 404:
-            print(f"WARNING: Resource not found")
-        elif e.status_code == 403:
-            print(f"⚠️ WARNING: Access denied")
-            print("   Solution: Ensure you have appropriate permissions")
-        else:
-            print(f"⚠️ WARNING: Fabric API error")
-        print(f"   Status Code: {e.status_code}")
-        print(f"   Details: {str(e)}")
-        print(f"❌ Exception while executing delete_connection: {e}")
+        print(f"❌ FabricApiError ({e.status_code}): {e}")
         raise
     except Exception as e:
-        print(f"WARNING: Unexpected error during connection deletion: {str(e)}")
-        print(f"❌ Exception while executing delete_connection: {e}")
+        print(f"❌ Error: {e}")
         raise
 
 def delete_connection_by_id(fabric_client: FabricApiClient, connection_id: str):
@@ -151,47 +133,17 @@ Examples:
         print("❌ Error: Cannot specify both --connection-name and --connection-id")
         sys.exit(1)
     
-    # Print configuration
-    print(f"🔌 Fabric Connection Deletion")
-    print("=" * 60)
-    if args.connection_name:
-        print(f"Connection Name: {args.connection_name}")
-    else:
-        print(f"Connection ID: {args.connection_id}")
-    print("=" * 60)
+    # Execute the main logic
+    fabric_client = FabricApiClient()
     
-    try:
-        # Authenticate
-        print(f"🔐 Authenticating Fabric API client...")
-        fabric_client = FabricApiClient()
-        print(f"✅ Authentication successful")
-        
-        # Delete connection
-        print(f"🗑️  Deleting connection...")
-        if args.connection_name:
-            result = delete_connection(fabric_client, args.connection_name)
-        else:
-            result = delete_connection_by_id(fabric_client, args.connection_id)
-        
-        if result:
-            print(f"\\n🎉 Connection deleted successfully!")
-            print(f"✅ Deleted connection ID: {result}")
-            sys.exit(0)
-        else:
-            print(f"\\n❌ Connection deletion failed!")
-            sys.exit(1)
-            
-    except Exception as e:
-        print(f"\\n❌ Unexpected error: {e}")
-        sys.exit(1)
+    # Delete connection
+    if args.connection_name:
+        result = delete_connection(fabric_client, args.connection_name)
+    else:
+        result = delete_connection_by_id(fabric_client, args.connection_id)
+    
+    print(f"\n✅ Deleted connection ID: {result if result else 'Failed'}")
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        print(f"\\n⚠️  Connection deletion cancelled by user")
-        sys.exit(1)
-    except Exception as e:
-        print(f"\\n❌ Unexpected error: {e}")
-        sys.exit(1)
+    main()

@@ -20,9 +20,6 @@ import sys
 import argparse
 from typing import Optional
 
-# Add current directory to path so we can import fabric_api
-sys.path.append(os.path.dirname(__file__))
-
 from fabric_api import FabricWorkspaceApiClient, FabricApiError
 
 def create_activator(workspace_id: str,
@@ -118,27 +115,15 @@ Examples:
     # Parse arguments
     args = parser.parse_args()
     
-    print(f"📊 Activator Creation Script")
-    print(f"  Workspace ID: {args.workspace_id}")
-    print(f"  Activator Name: {args.activator_name or '(not provided)'}")
-    print(f"  Description: {args.activator_description or '(not provided)'}")
-    print("=" * 60)
-    
     # Execute the main logic
-    try:
-        result = create_activator(
-            workspace_id=args.workspace_id,
-            activator_name=args.activator_name,
-            activator_description=args.activator_description
-        )
-        
-        print(f"\n🎉 Activator creation completed successfully.")
-        print(f"Activator ID: {result.get('id')}")
-        print(f"Activator Name: {result.get('displayName')}")
-        
-    except Exception as e:
-        print(f"Error: {e}")
-        exit(1)
+    result = create_activator(
+        workspace_id=args.workspace_id,
+        activator_name=args.activator_name,
+        activator_description=args.activator_description
+    )
+    
+    print(f"\n✅ Activator ID: {result.get('id')}")
+    print(f"✅ Activator Name: {result.get('displayName')}")
 
 
 if __name__ == "__main__":
