@@ -94,11 +94,7 @@ def fabric_rti_lookup_workspace(fabric_client: FabricApiClient, step_num: int = 
             (w for w in workspaces if w['displayName'].lower() == workspace_name.lower()), None)
         
         if not workspace:
-            print(f"WARNING: Workspace '{workspace_name}' not found")
-            print("   Available workspaces:")
-            for ws in workspaces:
-                print(f"   - {ws['displayName']} (ID: {ws['id']})")
-            print(f"❌ Exception while executing fabric_rti_lookup_workspace: Workspace not found")
+            print(f"   Workspace '{workspace_name}' not found")
             return None
         
         workspace_id = workspace['id']
@@ -145,7 +141,10 @@ def fabric_rti_delete_connection(fabric_client: FabricApiClient, step_num: int =
         connection_name: Name of the connection to delete
         
     Returns:
-        True if deletion successful, None if deletion fails
+        Connection ID if deletion successful, None if connection not found
+        
+    Raises:
+        FabricApiError: If deletion fails due to unexpected error
     """
     params = {'connection_name': connection_name}
     print_step(step_num, total_steps, "Deleting Event Hub connection", **params)
@@ -156,26 +155,26 @@ def fabric_rti_delete_connection(fabric_client: FabricApiClient, step_num: int =
         
         # Find connection by display name
         connection = None
-        for conn in connections.get('value', []):
+        for conn in connections:
             if conn.get('displayName', '').lower() == connection_name.lower():
                 connection = conn
                 break
         
         if not connection:
-            print(f"WARNING: Connection '{connection_name}' not found")
-            print("   Available connections:")
-            for conn in connections.get('value', []):
-                print(f"   - {conn.get('displayName', 'Unknown')} (ID: {conn.get('id', 'Unknown')})")
-            print(f"✅ Connection '{connection_name}' does not exist, nothing to delete")
-            return True
+            print(f"Connection '{connection_name}' not found")
+            return None
         
         connection_id = connection.get('id')
         print(f"Found connection: '{connection_name}' (ID: {connection_id})")
         
         # Delete the connection
-        fabric_client.delete_connection(connection_id)
-        print(f"✅ Successfully completed: fabric_rti_delete_connection")
-        return True
+        deleted_connection_id = fabric_client.delete_connection(connection_id)
+        if deleted_connection_id:
+            print(f"✅ Successfully completed: fabric_rti_delete_connection (deleted: {deleted_connection_id})")
+            return deleted_connection_id
+        else:
+            print(f"Connection {connection_id} was not found during deletion")
+            return None
         
     except FabricApiError as e:
         if e.status_code == 401:
@@ -196,11 +195,11 @@ def fabric_rti_delete_connection(fabric_client: FabricApiClient, step_num: int =
         print(f"   Status Code: {e.status_code}")
         print(f"   Details: {str(e)}")
         print(f"❌ Exception while executing fabric_rti_delete_connection: {e}")
-        return None
+        raise
     except Exception as e:
         print(f"WARNING: Unexpected error during connection deletion: {str(e)}")
         print(f"❌ Exception while executing fabric_rti_delete_connection: {e}")
-        return None
+        raise
 
 def fabric_rti_delete_workspace(fabric_client: FabricApiClient, step_num: int = None, total_steps: int = None, workspace_id: str = None):
     """
@@ -213,14 +212,24 @@ def fabric_rti_delete_workspace(fabric_client: FabricApiClient, step_num: int = 
         workspace_id: ID of the workspace to delete
         
     Returns:
-        True if deletion successful, None if deletion fails
+        Workspace ID if deletion successful, None if workspace not found
+        
+    Raises:
+        FabricApiError: If deletion fails due to unexpected error
     """
     print_step(step_num, total_steps, "Deleting workspace", workspace_id=workspace_id)
     
     try:
-        fabric_client.delete_workspace(workspace_id)
-        print(f"✅ Successfully completed: fabric_rti_delete_workspace")
-        return True
+        deleted_workspace_id = fabric_client.delete_workspace(workspace_id)
+        if deleted_workspace_id:
+            print(f"✅ Successfully completed: fabric_rti_delete_workspace (deleted: {deleted_workspace_id})")
+            return deleted_workspace_id
+        else:
+            print(f"Workspace {workspace_id} was not found")
+            return None
+    except FabricApiError as e:
+        print(f"❌ Exception while executing fabric_rti_delete_workspace: {e}")
+        raise
     except Exception as e:
         print(f"❌ Exception while executing fabric_rti_delete_workspace: {e}")
-        return None
+        raise
