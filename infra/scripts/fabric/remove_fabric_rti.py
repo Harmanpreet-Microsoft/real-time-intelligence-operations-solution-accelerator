@@ -1,205 +1,151 @@
 #!/usr/bin/env python3
 """
-Removes Microsoft Fabric workspace for the Real-Time Intelligence Operations Solution Accelerator.
+Workspace removal orchestrator script for Real-Time Intelligence Operations Solution Accelerator.
 
-This script provides safe deletion of RTI workspaces from Microsoft Fabric including:
-• Workspace lookup and verification
-• Safe deletion with confirmation prompts
-• Comprehensive error handling and user guidance
+This script coordinates the execution of workspace removal functions
+in the correct order, with proper error handling and logging. It uses environment
+variables for configuration and calls each function directly.
+
+Functions executed in order:
+1. fabric_rti_authenticate - Authenticate Fabric API client
+2. fabric_rti_lookup_workspace - Look up workspace by name
+3. fabric_rti_delete_connection - Delete Event Hub connection
+4. fabric_rti_delete_workspace - Delete the Fabric workspace
 
 Usage:
     python remove_fabric_rti.py
 
-Environment Variables:
+Environment Variables (from Bicep outputs):
+    AZURE_ENV_NAME - Name of the Azure environment
     SOLUTION_SUFFIX - Required suffix to append to default workspace name
     FABRIC_WORKSPACE_NAME - Name of the Fabric workspace (optional, uses default if not provided)
-    FABRIC_WORKSPACE_ID - ID of the Fabric workspace (GUID) (optional, overrides name-based lookup)
-
-Prerequisites:
-    - Azure CLI (logged in): az login
-    - Python packages: requests, azure-identity, azure-core, azure-storage-file-datalake
-    - Appropriate Fabric workspace permissions (Admin role required for deletion)
-
-Author: Generated for Real-Time Intelligence Operations Solution Accelerator
+    FABRIC_EVENT_HUB_CONNECTION_NAME - Name of the Event Hub connection (optional, uses default if not provided)
 """
 
-from fabric_api import create_fabric_client, FabricApiError
-import sys
 import os
+import sys
+from datetime import datetime
 
-####################
-# Variables set up #
-####################
+# Add current directory to path so we can import local modules
+sys.path.append(os.path.dirname(__file__))
 
-solution_name = "Real-Time Intelligence Operations Solution Accelerator"
-script_dir = os.path.dirname(os.path.abspath(__file__))
-# Go up three levels from infra/scripts/fabric to repo root
-repo_root = os.path.dirname(os.path.dirname(os.path.dirname(script_dir)))
+# Import removal functions
+from fabric_rti_helper import fabric_rti_authenticate, fabric_rti_lookup_workspace, fabric_rti_delete_connection, fabric_rti_delete_workspace, get_required_env_var
 
-def get_required_env_var(var_name: str) -> str:
-    """Get required environment variable value."""
-    value = os.getenv(var_name)
-    if not value:
-        print(f"Missing required environment variable: {var_name}")
-        sys.exit(1)
-    return value
+def print_summary(executed_steps: list, failed_step: str = None):
+    """Print execution summary."""
+    print("\n" + "="*60)
+    print("📊 EXECUTION SUMMARY")
+    print("="*60)
+    
+    if executed_steps:
+        print("✅ Successfully executed functions:")
+        for step in executed_steps:
+            print(f"   ✓ {step}")
+    
+    if failed_step:
+        print(f"\n❌ Failed at function: {failed_step}")
+        print(f"\n💡 To resume from failed point, fix the issue and re-run the remove_fabric_rti.py script")
+    else:
+        print(f"\n🎉 All {len(executed_steps)} functions completed successfully!")
 
-##########################
-# Load configuration     #
-##########################
+def main():
+    # Calculate repository root directory (3 levels up from this script)
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    repo_dir = os.path.abspath(os.path.join(script_dir, "..", "..", ".."))
+    
+    # Load configuration from environment variables
+    solution_name = get_required_env_var("AZURE_ENV_NAME")
+    solution_suffix = get_required_env_var("SOLUTION_SUFFIX")
+    workspace_name = os.getenv("FABRIC_WORKSPACE_NAME", f"Real-Time Intelligence for Operations - {solution_suffix}")
+    connection_name = os.getenv("FABRIC_EVENT_HUB_CONNECTION_NAME", f"rti_eventhub_connection_{solution_suffix}")
 
-# Load configuration from environment variables
-solution_suffix = get_required_env_var("SOLUTION_SUFFIX")
-workspace_name = os.getenv("FABRIC_WORKSPACE_NAME", f"Real-Time Intelligence for Operations - {solution_suffix}")
-workspace_id = os.getenv("FABRIC_WORKSPACE_ID")
-
-# Validate that only one workspace identifier is provided
-if workspace_name and workspace_id:
-    print("WARNING: Both FABRIC_WORKSPACE_NAME and FABRIC_WORKSPACE_ID are set.")
-    print("         Using FABRIC_WORKSPACE_NAME and ignoring FABRIC_WORKSPACE_ID.")
-    workspace_id = None
-
-print(f"Deleting Microsoft Fabric workspace for the Real-Time Intelligence Operations Solution Accelerator")
-if workspace_name:
+    # Show removal summary
+    print(f"🏭 {solution_name} Workspace Removal")
+    print("="*60)
     print(f"Target workspace name: {workspace_name}")
-else:
-    print(f"Target workspace ID: {workspace_id}")
-print("-" * 80)
+    print(f"Target connection name: {connection_name}")
+    print(f"Solution Suffix: {solution_suffix}")
+    print(f"Start time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print("="*60)
+    
+    executed_steps = []
+    
+    # Step 1: Authenticate Fabric API client
+    fabric_client = fabric_rti_authenticate(step_num=1, total_steps=4)
+    if fabric_client is None:
+        print_summary(executed_steps, failed_step="fabric_rti_authenticate")
+        sys.exit(1)
+    executed_steps.append("fabric_rti_authenticate")
+    
+    # Step 2: Look up workspace by name
+    lookup_result = fabric_rti_lookup_workspace(
+        fabric_client,
+        step_num=2, total_steps=4,
+        workspace_name=workspace_name
+    )
+    if lookup_result is None:
+        print_summary(executed_steps, failed_step="fabric_rti_lookup_workspace")
+        sys.exit(1)
+    executed_steps.append("fabric_rti_lookup_workspace")
+    workspace_id, workspace_display_name = lookup_result
+    
+    # Step 3: Delete Event Hub connection
+    connection_result = fabric_rti_delete_connection(
+        fabric_client,
+        step_num=3, total_steps=4,
+        connection_name=connection_name
+    )
+    if connection_result is None:
+        print_summary(executed_steps, failed_step="fabric_rti_delete_connection")
+        sys.exit(1)
+    executed_steps.append("fabric_rti_delete_connection")
+    
+    # Step 4: Delete workspace
+    result = fabric_rti_delete_workspace(
+        fabric_client,
+        step_num=4, total_steps=4,
+        workspace_id=workspace_id
+    )
+    if result is None:
+        print_summary(executed_steps, failed_step="fabric_rti_delete_workspace")
+        sys.exit(1)
+    executed_steps.append("fabric_rti_delete_workspace")
+    
+    # Success!
+    print(f"\n🎉 {solution_name} workspace removal completed successfully!")
+    print(f"End time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    
+    print_summary(executed_steps)
 
-##########################
-# Clients authentication #
-##########################
+    print(f"\n" + "="*60)
+    print(f"🎉 {solution_name.upper()} WORKSPACE REMOVAL COMPLETE!")
+    print(f"="*60)
+    print(f"📅 Completed: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"🏷️  Solution: {solution_suffix}")
+    print(f"\n🗑️  DELETED RESOURCE:")
+    print(f"   🏠 Workspace: {workspace_display_name}")
+    print(f"   🆔 ID:        {workspace_id}")
+    print(f"\n✨ Your workspace has been successfully removed!")
+    print(f"="*60)
 
-print("Authenticating Fabric client...")
-# Initialize Fabric API client
-try:
-    fabric_client = create_fabric_client()
-    print("Fabric API client authenticated successfully")
-except Exception as e:
-    print(f"WARNING: Failed to authenticate with Fabric APIs")
-    print(f"   Details: {str(e)}")
-    print("   Solution: Please ensure you are logged in with Azure CLI: az login")
-    print("   Exiting gracefully...")
-    sys.exit(0)
-
-###########################
-# Workspace lookup/verify #
-###########################
-
-try:
-    # If workspace name is provided, look it up to get the ID
-    if workspace_name:
-        print(f"Looking up workspace: '{workspace_name}'")
-        workspaces = fabric_client.get_workspaces()
-        workspace = next(
-            (w for w in workspaces if w['displayName'].lower() == workspace_name.lower()), None)
-        
-        if not workspace:
-            print(f"WARNING: Workspace '{workspace_name}' not found")
-            print("   Available workspaces:")
-            for ws in workspaces:
-                print(f"   - {ws['displayName']} (ID: {ws['id']})")
-            print("   Exiting gracefully...")
-            sys.exit(0)
-        
-        workspace_id = workspace['id']
-        workspace_display_name = workspace['displayName']
-        print(f"✅ Found workspace: '{workspace_display_name}' (ID: {workspace_id})")
-    else:
-        # If workspace ID is provided, verify it exists
-        print(f"Verifying workspace ID: '{workspace_id}'")
-        workspaces = fabric_client.get_workspaces()
-        workspace = next(
-            (w for w in workspaces if w['id'].lower() == workspace_id.lower()), None)
-        
-        if not workspace:
-            print(f"WARNING: Workspace with ID '{workspace_id}' not found")
-            print("   Available workspaces:")
-            for ws in workspaces:
-                print(f"   - {ws['displayName']} (ID: {ws['id']})")
-            print("   Exiting gracefully...")
-            sys.exit(0)
-        
-        workspace_display_name = workspace['displayName']
-        print(f"✅ Found workspace: '{workspace_display_name}' (ID: {workspace_id})")
-
-except FabricApiError as e:
-    if e.status_code == 401:
-        print(f"⚠️ WARNING: Unauthorized access to Fabric APIs")
-        print("   ⚠️ WARNING: Please review your Fabric permissions and licensing:")
-        print("   📋 Check these resources:")
-        print("   • Fabric licenses: https://learn.microsoft.com/en-us/fabric/enterprise/licenses")
-        print("   • Identity support: https://learn.microsoft.com/en-us/rest/api/fabric/articles/identity-support")
-        print("   • Create Entra app: https://learn.microsoft.com/en-us/rest/api/fabric/articles/get-started/create-entra-app")
-        print("   Solution: Ensure you have proper Fabric licensing and permissions")
-        print("   Exiting gracefully...")
-        sys.exit(0)
-    elif e.status_code == 404:
-        print(f"WARNING: Resource not found")
-    elif e.status_code == 403:
-        print(f"⚠️ WARNING: Access denied")
-        print("   Solution: Ensure you have appropriate permissions")
-    else:
-        print(f"⚠️ WARNING: Fabric API error")
-    print(f"   Status Code: {e.status_code}")
-    print(f"   Details: {str(e)}")
-    print("   Exiting gracefully...")
-    sys.exit(0)
-except Exception as e:
-    print(f"WARNING: Unexpected error during workspace lookup: {str(e)}")
-    print("   Exiting gracefully...")
-    sys.exit(0)
-
-####################
-# Confirmation     #
-####################
-
-# Proceeding with deletion in unattended mode
-print(f"Proceeding with workspace deletion...")
-
-######################
-# Workspace deletion #
-######################
-
-try:
-    print(f"Deleting workspace: '{workspace_display_name}'")
-    fabric_client.delete_workspace(workspace_id)
-    print(f"Workspace '{workspace_display_name}' deleted successfully")
-
-except FabricApiError as e:
-    if e.status_code == 401:
-        print(f"⚠️ WARNING: Unauthorized access to Fabric APIs")
-        print("   ⚠️ WARNING: Please review your Fabric permissions and licensing:")
-        print("   📋 Check these resources:")
-        print("   • Fabric licenses: https://learn.microsoft.com/en-us/fabric/enterprise/licenses")
-        print("   • Identity support: https://learn.microsoft.com/en-us/rest/api/fabric/articles/identity-support")
-        print("   • Create Entra app: https://learn.microsoft.com/en-us/rest/api/fabric/articles/get-started/create-entra-app")
-        print("   Solution: Ensure you have proper Fabric licensing and permissions")
-        print("   Exiting gracefully...")
-        sys.exit(0)
-    elif e.status_code == 404:
-        print(f"⚠️ WARNING: Workspace not found (may have already been deleted)")
-        print("   This is typically not an issue during cleanup operations")
-    elif e.status_code == 403:
-        print(f"⚠️ WARNING: Access denied")
-        print("   Solution: Ensure you have Admin permissions on this workspace")
-    else:
-        print(f"⚠️ WARNING: Fabric API error")
-    print(f"   Status Code: {e.status_code}")
-    print(f"   Details: {str(e)}")
-    print("   Exiting gracefully...")
-    sys.exit(0)
-except Exception as e:
-    print(f"⚠️ WARNING: Unexpected error during workspace deletion: {str(e)}")
-    print("   Exiting gracefully...")
-    sys.exit(0)
-
-##################
-# End of program #
-##################
-
-print("-" * 80)
-print(f"{solution_name} workspace removal completed successfully!")
-print(f"Deleted workspace: {workspace_display_name}")
-print(f"Workspace ID: {workspace_id}")
-print("-" * 80)
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        print(f"\n⚠️ Workspace removal interrupted by user")
+        sys.exit(1)
+    except UnicodeEncodeError as e:
+        print(f"\n[ERROR] Unicode encoding error detected:")
+        print(f"Your console doesn't support the Unicode characters used in this script.")
+        print(f"This is common on Windows systems with certain console configurations.")
+        print(f"\nSolutions:")
+        print(f"1. Run the script in Windows Terminal or VS Code terminal")
+        print(f"2. Use PowerShell 7+ instead of Windows PowerShell")
+        print(f"3. Set environment variable: set PYTHONIOENCODING=utf-8")
+        print(f"4. Use command: chcp 65001 (to set UTF-8 codepage)")
+        print(f"\nTechnical details: {e}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"\n[ERROR] Unexpected error: {e}")
+        sys.exit(1)

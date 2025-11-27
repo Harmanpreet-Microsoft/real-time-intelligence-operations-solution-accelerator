@@ -129,9 +129,7 @@ def main():
     activator_name = os.getenv("FABRIC_ACTIVATOR_NAME", f"rti_activator_{solution_suffix}")
     activator_alerts_email = os.getenv("FABRIC_ACTIVATOR_ALERTS_EMAIL", "alerts@contoso.com")
 
-    # The database will be created with the eventhouse and then renamed to the desired name
-    # A database of the same name as the eventhouse is auto-created when creating an eventhouse
-    # We will rename it to the desired database name using the KQL database API
+    # Show initialization summary
     print(f"🏭 {solution_name} Initialization")
     print("="*60)
     print(f"Capacity: {capacity_name}")
