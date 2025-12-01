@@ -122,9 +122,8 @@ jobs:
         working-directory: infra/scripts/utils
         env:
           # Required environment variables from Bicep outputs
-          AZURE_ENV_NAME: ${{ env.AZURE_ENV_NAME_DEV }}
           SOLUTION_SUFFIX: ${{ steps.bicep-deploy.outputs.SOLUTION_SUFFIX }}
-          AZURE_SUBSCRIPTION_ID: ${{ env.AZURE_SUBSCRIPTION_ID }}
+          AZURE_ENV_NAME: ${{ env.AZURE_ENV_NAME_DEV }}
           AZURE_RESOURCE_GROUP: ${{ env.AZURE_RESOURCE_GROUP_NAME_DEV }}
           AZURE_FABRIC_CAPACITY_NAME: ${{ steps.bicep-deploy.outputs.AZURE_FABRIC_CAPACITY_NAME }}
           AZURE_EVENT_HUB_NAME: ${{ steps.bicep-deploy.outputs.AZURE_EVENT_HUB_NAME }}
