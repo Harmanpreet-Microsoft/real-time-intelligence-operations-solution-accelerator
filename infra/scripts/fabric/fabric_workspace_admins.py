@@ -70,8 +70,10 @@ def detect_principal_type(admin_identifier, graph_client=None):
         return principal_type, object_id, principal_data
         
     except GraphApiError as e:
-        # Convert Graph API errors to ValueError for backward compatibility
-        raise ValueError(f"Unable to resolve principal '{admin_identifier}': {str(e)}")
+        # Convert Graph API errors to Unknown type for fallback handling
+        print(f"  ⚠️ WARNING: Graph API lookup failed for '{admin_identifier}': {str(e)}")
+        print(f"     Will try both ServicePrincipal and User types...")
+        return "Unknown", admin_identifier, {"id": admin_identifier, "displayName": "Unknown"}
     except Exception as e:
         # Fallback to original logic if Graph API is not available
         print(f"  ⚠️ WARNING: Graph API lookup failed for '{admin_identifier}': {str(e)}")
@@ -82,8 +84,8 @@ def detect_principal_type(admin_identifier, graph_client=None):
         elif "@" in admin_identifier and "." in admin_identifier:
             return "User", admin_identifier, {"userPrincipalName": admin_identifier, "displayName": "Unknown"}
         else:
-            raise ValueError(
-                f"Unable to determine if '{admin_identifier}' is a user UPN or service principal GUID")
+            print(f"     Unable to determine principal type - will try both ServicePrincipal and User...")
+            return "Unknown", admin_identifier, {"id": admin_identifier, "displayName": "Unknown"}
 
 def get_existing_admin_principals(workspace_client):
     """Get set of existing admin principal IDs for duplicate checking."""
@@ -133,30 +135,70 @@ def add_workspace_admin(workspace_client, admin_identifier, existing_principals,
             return {'status': 'skipped', 'message': 'Already exists (by object ID)'}
         
         display_name = principal_data.get('displayName', 'Unknown')
-        print(f"    🔐 Adding {principal_type.lower()} administrator: {admin_identifier} ({display_name})")
         
-        # Add role assignment based on type
-        if principal_type == "User":
-            workspace_client.add_role_assignment(
-                principal_id=object_id,
-                principal_type=principal_type,
-                role="Admin",
-                display_name=display_name,
-                user_principal_name=principal_data.get('userPrincipalName', admin_identifier)
-            )
-        else:  # ServicePrincipal
-            workspace_client.add_role_assignment(
-                principal_id=object_id,
-                principal_type=principal_type,
-                role="Admin",
-                display_name=display_name,
-                aad_app_id=principal_data.get('appId')
-            )
-        
-        print(f"    ✅ Successfully added '{admin_identifier}' as workspace administrator")
-        existing_principals.add(object_id.lower())
-        existing_principals.add(admin_identifier.lower())
-        return {'status': 'success', 'message': 'Added successfully'}
+        # Handle unknown principal type by trying both ServicePrincipal and User
+        if principal_type == "Unknown":
+            print(f"    🔐 Trying to add administrator (type unknown): {admin_identifier} ({display_name})")
+            
+            # Try ServicePrincipal first
+            try:
+                print(f"    🔄 Attempting as ServicePrincipal...")
+                workspace_client.add_role_assignment(
+                    principal_id=object_id,
+                    principal_type="ServicePrincipal",
+                    role="Admin",
+                    display_name=display_name,
+                    aad_app_id=principal_data.get('appId')
+                )
+                print(f"    ✅ Successfully added '{admin_identifier}' as ServicePrincipal administrator")
+                existing_principals.add(object_id.lower())
+                existing_principals.add(admin_identifier.lower())
+                return {'status': 'success', 'message': 'Added successfully as ServicePrincipal'}
+            except Exception as sp_error:
+                print(f"    ❌ ServicePrincipal attempt failed: {str(sp_error)}")
+                
+                # Try User as fallback
+                try:
+                    print(f"    🔄 Attempting as User...")
+                    workspace_client.add_role_assignment(
+                        principal_id=object_id,
+                        principal_type="User",
+                        role="Admin",
+                        display_name=display_name,
+                        user_principal_name=principal_data.get('userPrincipalName', admin_identifier)
+                    )
+                    print(f"    ✅ Successfully added '{admin_identifier}' as User administrator")
+                    existing_principals.add(object_id.lower())
+                    existing_principals.add(admin_identifier.lower())
+                    return {'status': 'success', 'message': 'Added successfully as User'}
+                except Exception as user_error:
+                    print(f"    ❌ User attempt also failed: {str(user_error)}")
+                    return {'status': 'failed', 'message': f'Failed as both ServicePrincipal and User: SP({str(sp_error)}), User({str(user_error)})'}
+        else:
+            print(f"    🔐 Adding {principal_type.lower()} administrator: {admin_identifier} ({display_name})")
+            
+            # Add role assignment based on type
+            if principal_type == "User":
+                workspace_client.add_role_assignment(
+                    principal_id=object_id,
+                    principal_type=principal_type,
+                    role="Admin",
+                    display_name=display_name,
+                    user_principal_name=principal_data.get('userPrincipalName', admin_identifier)
+                )
+            else:  # ServicePrincipal
+                workspace_client.add_role_assignment(
+                    principal_id=object_id,
+                    principal_type=principal_type,
+                    role="Admin",
+                    display_name=display_name,
+                    aad_app_id=principal_data.get('appId')
+                )
+            
+            print(f"    ✅ Successfully added '{admin_identifier}' as workspace administrator")
+            existing_principals.add(object_id.lower())
+            existing_principals.add(admin_identifier.lower())
+            return {'status': 'success', 'message': 'Added successfully'}
         
     except (ValueError, GraphApiError) as e:
         return {'status': 'failed', 'message': f'Principal type detection failed: {str(e)}'}
