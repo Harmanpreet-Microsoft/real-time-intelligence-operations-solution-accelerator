@@ -6,7 +6,7 @@ Please review the Access Requirements Section to ensure you have proper access f
 
 ## Access Requirements 
 
-If you deployed the solution accelerator via AZD following the [Deployment Guide](./DeploymentGuide.md), you have already established the required access to the solution, and **you can skip this Access Requirements section**, and start at [Step 1. Refresh Historical Data](#step-1-refresh-historical-data)
+If you deployed the solution accelerator via AZD following the [Deployment Guide](./DeploymentGuide.md), you have already established the required access to the solution, and **you can skip this Access Requirements section**, and start at [Step 1. Refresh Historical Data](#step-1-refresh-historical-data).
 
 If you are using a demonstration environment already set up by someone else, you will need below accesses: 
 
