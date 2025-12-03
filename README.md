@@ -83,7 +83,7 @@ Quick deploy
 
 Follow these steps to deploy the solution to your own Azure subscription:
 
-<div style="width: 100%; display: flex; justify-content: space-evenly; align-items: center; flex-wrap: wrap; gap: 10px;">
+<div style="width: 100%; display: flex; justify-content: space-evenly; align-items: center;">
 
 [![GitHub Codespaces](https://img.shields.io/badge/GitHub_Codespaces-Open-grey?style=flat&labelColor=grey&message=Open&color=blue&logo=github)](https://codespaces.new/microsoft/real-time-intelligence-operations-solution-accelerator)
 
