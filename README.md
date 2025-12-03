@@ -87,8 +87,6 @@ Follow these steps to deploy the solution to your own Azure subscription:
 |---|---|---|---|
 | | | |
 
-<br/>
-
 **One-command deployment** - Deploy everything with [Azure Developer CLI](https://learn.microsoft.com/azure/developer/azure-developer-cli/install-azd) and [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) (check [prerquisites](./docs/DeploymentGuide.md#prerequisites)):
 
 ```bash
