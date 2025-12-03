@@ -1,12 +1,12 @@
 # Real-Time Intelligence for Operations Solution Accelerator
 
-This solution accelerator provides the architecture and working solution for real-time intelligence for operations. We used simulated manufacturing facility asset data for the process flow.  As real-time events are streamed in, anomalies are detected with notifications sent to a specified Outlook email account. The solution includes a customized Fabric Data Agent that provides a chat experience to answer users' questions with intelligence derived from the data. 
+This solution accelerator provides the architecture and working solution for real-time intelligence for operations. We used simulated manufacturing facility asset data for the process flow. As real-time events are streamed in, anomalies are detected with notifications sent to a specified Outlook email account. The solution includes a customized Fabric Data Agent that provides a chat experience to answer users' questions with intelligence derived from the data.
 
 **Key use cases include:**
 
-- Real-time dashboard with up to date analysis and reporting  
-- Anomaly detection and notification 
-- Customized data agent answering users' questions with intelligence derived from the data 
+- Real-time dashboard with up-to-date analysis and reporting.
+- Anomaly detection and notification.
+- Customized data agent answering users' questions with intelligence derived from the data.
 
 <br/>
 
@@ -34,10 +34,10 @@ Below diagram illustrates the solution architecture.
 ### How to customize
 If you'd like to customize the solution accelerator, here are some common areas to start: 
 
-- Data generation and collection: You can customize the data simulator to generate data that is closely aligned with your own industry or your own company. 
-- Update the KQL queries for the tiles in Real-Time intelligence dashboard.  
-- Update the Activator rules to meet your business needs
-- Update the instructions to the Fabric Data Agent to align with your own business goals and data insights. 
+- Data generation and collection: You can customize the data simulator to generate data that is closely aligned with your own industry or your own company.
+- Update the KQL queries for the tiles in Real-Time Intelligence dashboard.
+- Update the Activator rules to meet your business needs.
+- Update the instructions to the Fabric Data Agent to align with your own business goals and data insights.
 
 <br/>
 
@@ -57,15 +57,15 @@ If you'd like to customize the solution accelerator, here are some common areas 
 <details>
   <summary>Click to learn more about the key features this solution enables</summary> 
 
-  - **Fabric Data Ingestion Program and Real Time Event Simulator** <br/>One-time batch historical data simulator and real-time telemetry data simulator are provided. For more details, please refer to [Fabric Data Ingestion Guide](./docs/FabricDataIngestion.md) and  [Event Simulator Guide](./docs/EventSimulatorGuide.md).
+  - **Fabric Data Ingestion Program and Real-Time Event Simulator** <br/>One-time batch historical data simulator and real-time telemetry data simulator are provided. For more details, please refer to [Fabric Data Ingestion Guide](./docs/FabricDataIngestion.md) and [Event Simulator Guide](./docs/EventSimulatorGuide.md).
 
-  - **Real Time Intelligence Operations Dashboard** <br/>Real-Time Intelligence Operations Dashboard provides overview on how manufacturing assets are performing, and showing individual sensor data trends. For details, please refer to [Real Time Intelligence Dashboard Guide](./docs/RealTimeIntelligenceDashboardGuide.md).
+  - **Real-Time Intelligence Operations Dashboard** <br/>Real-Time Intelligence Operations Dashboard provides an overview of how manufacturing assets are performing, and shows individual sensor data trends. For details, please refer to [Real-Time Intelligence Dashboard Guide](./docs/RealTimeIntelligenceDashboardGuide.md).
 
   - **Fabric EventHouse with Customized Fabric Data Agent**
 
-    Manufacturing telemetry data is hosted in Fabric EventHouse. You can use conversational interface powered by Fabric Data Agent for live operational queries.  For details, please refer to [Fabric Data Agent Guide](./docs/FabricDataAgentGuide.md).
+    Manufacturing telemetry data is hosted in Fabric EventHouse. You can use conversational interface powered by Fabric Data Agent for live operational queries. For details, please refer to [Fabric Data Agent Guide](./docs/FabricDataAgentGuide.md).
 
-  - **Anomaly Detection and Alerts through Fabric Activator** <br/>Microsoft Activator is configured with anomaly detection rules that triggers outlook email notifications when an anomaly occurs. For more details, please refer to [Activator Guide](./docs/ActivatorGuide.md).
+  - **Anomaly Detection and Alerts through Fabric Activator** <br/>Microsoft Activator is configured with anomaly detection rules that trigger Outlook email notifications when an anomaly occurs. For more details, please refer to [Activator Guide](./docs/ActivatorGuide.md).
 
   - **Useful Data Analysis and Performance Metrics KQL Code** <br/>Reusable KQL code is provided to get you started quickly. For details, please refer to [Data Analysis KQL Guide](./src/kql/data_analysis/data_analysis_guide.md) and [Performance Metrics KQL Queryset Guide](./src/kql/kql_queryset/kql_queryset_guide.md). 
 
@@ -88,7 +88,7 @@ Follow these steps to deploy the solution to your own Azure subscription:
 
 <br/>
 
-**One-command deployment** - Deploy everything with [Azure Developer CLI](https://learn.microsoft.com/azure/developer/azure-developer-cli/install-azd) and [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) (Check [prerquisites](./docs/DeploymentGuide.md#prerequisites)):
+**One-command deployment** - Deploy everything with [Azure Developer CLI](https://learn.microsoft.com/azure/developer/azure-developer-cli/install-azd) and [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) (Check [prerequisites](./docs/DeploymentGuide.md#prerequisites)):
 
 ```bash
 # Clone and navigate to repository
@@ -99,7 +99,7 @@ cd real-time-intelligence-operations-solution-accelerator
 azd auth login # Required to deploy with azd up
 az login # Required to use the Azure CLI commands that connect Azure resources to Fabric workspace
 
-# Recommended: set email to recieve alerts
+# Recommended: set email to receive alerts
 azd env set FABRIC_ACTIVATOR_ALERTS_EMAIL "myteam@company.com"
 
 
@@ -160,13 +160,13 @@ Business use case
 </h2>
 Use cases can be summarized as below:
 
-- For manufacturing plants, the plant manager or other business stakeholders can use the Fabric Data Agent to get business and operations intelligence quickly without the need to create query code. For details, please refer to [Fabric Data Agent Guide](./docs/FabricDataAgentGuide.md). 
+- For manufacturing plants, the plant manager or other business stakeholders can use the Fabric Data Agent to get business and operations intelligence quickly without the need to create query code. For details, please refer to [Fabric Data Agent Guide](./docs/FabricDataAgentGuide.md).
 
-- For manufacturing plants, the designated operations team receives email notification when anomaly occurs. The solution can also be configured to send anomaly notifications to a Teams Channel. For rule configuration options (Email or Teams), please refer to [Activator Guide](./docs/ActivatorGuide.md).
+- For manufacturing plants, the designated operations team receives email notification when an anomaly occurs. The solution can also be configured to send anomaly notifications to a Teams Channel. For rule configuration options (Email or Teams), please refer to [Activator Guide](./docs/ActivatorGuide.md).
 
 - Plant manager uses real-time dashboard to analyze manufacturing plant asset performance, key telemetry data over time.
 
-  The image below shows the first page of the real-time intelligence operations dashboard, which displays sensor status, quality metrics, and individual sensor data trends. The second page shows additional information such as daily anomaly rate by asset, asset maintenance status, and fault correlations.  For more details, please refer to [Real Time Intelligence Operations Dashboard Guide](./docs/RealTimeIntelligenceDashboardGuide.md). 
+  The image below shows the first page of the real-time intelligence operations dashboard, which displays sensor status, quality metrics, and individual sensor data trends. The second page shows additional information such as daily anomaly rate by asset, asset maintenance status, and fault correlations. For more details, please refer to [Real-Time Intelligence Operations Dashboard Guide](./docs/RealTimeIntelligenceDashboardGuide.md). 
 
 | ![image](./docs/images/readme/rti-dashboard.png) |
 | ------------------------------------------------ |
@@ -179,21 +179,20 @@ Use cases can be summarized as below:
 <details>
   <summary>Click to learn more about what value this solution provides</summary>
 
-  -  **The solution provides multiple business functions with a simple architecture** <br/>
-    The deployed solution provides real time telemetry data monitoring, analysis, summarization, graphical reports, anomaly detection and notifications with a quick to deploy, secure, and simple architecture. 
+  - **The solution provides multiple business functions with a simple architecture** <br/>
+    The deployed solution provides real-time telemetry data monitoring, analysis, summarization, graphical reports, anomaly detection and notifications with a quick to deploy, secure, and simple architecture.
 
   - **A Fabric Data Agent getting quick business intelligence without programming effort.** <br/>
-    The Fabric Data Agent can be quickly configured with instructions delivered in this solution accelerator, providing quick and accurate insights from data effortlessly. No programming skills are necessary. 
+    The Fabric Data Agent can be quickly configured with instructions delivered in this solution accelerator, providing quick and accurate insights from data effortlessly. No programming skills are necessary.
 
-  - **Real Time Intelligence for Operations Dashboard**<br/>
-    The deployed solution accelerator provides a working architecture with best practices, security, components integration, and real-time intelligence for operations dashboard. 
+  - **Real-Time Intelligence for Operations Dashboard**<br/>
+    The deployed solution accelerator provides a working architecture with best practices, security, components integration, and real-time intelligence for operations dashboard.
 
   - **Configurable Activator providing anomaly detection and notifications** <br/>
-    The deployed and configurable Activator provides real time anomaly detection and alert notifications out of the box. The rules are easily configurable. 
+    The deployed and configurable Activator provides real-time anomaly detection and alert notifications out of the box. The rules are easily configurable.
 
-  - **Reusable and updatable real time event simulator and batch data update program** <br/>
-
-    Real time telemetry data simulator and batch data ingestion / update program are provided to help to bring the solution to simulate a real time environment quickly. 
+  - **Reusable and updatable real-time event simulator and batch data update program** <br/>
+    Real-time telemetry data simulator and batch data ingestion / update program are provided to help to bring the solution to simulate a real-time environment quickly. 
 
 </details>
 
@@ -230,7 +229,7 @@ Check out similar solution accelerators
 | Solution Accelerator | Description |
 |---|---|
 | [Unified Data Foundation with Microsoft Fabric](https://github.com/microsoft/unified-data-foundation-with-fabric-solution-accelerator) | Unified Data Foundation with Microsoft Fabric with Options to Integrate with Azure Databricks and Microsoft Purview. |
-| [Agentic applications for unified data foundation](https://github.com/microsoft/agentic-applications-for-unified-data-foundation-solution-accelerator) | Agentic AI application that provides nature language query of the data using unified data foundation.  Description of solution accelerator. |
+| [Agentic applications for unified data foundation](https://github.com/microsoft/agentic-applications-for-unified-data-foundation-solution-accelerator) | Agentic AI application that provides natural language query of the data using unified data foundation. Description of solution accelerator. |
 
 <br/>   
 

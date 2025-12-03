@@ -16,7 +16,7 @@ After you are done with the updates, you can click `Save`, and then `Start` to a
 
 ![Activator Rule Example](../docs/images/deployment/activator-rule-example-vibration.png)
 
-If any one of the rules were triggered by the set condition, for example, the rule set for high vibration, an email alert ill be sent to the specified account, as illustrated below.
+If any one of the rules were triggered by the set condition, for example, the rule set for high vibration, an email alert will be sent to the specified account, as illustrated below.
 
 ![Email Alert](../docs/images/deployment/activator-email-alert.png)
 
