@@ -223,6 +223,7 @@ Choose your deployment environment based on your workflow and requirements. All 
 | **[Azure Cloud Shell](#azure-cloud-shell)** | Zero setup | Just a web browser | Pre-configured tools, session timeouts |
 | **[GitHub Codespaces](#github-codespaces)** | Team consistency | GitHub account | Cloud development environment |
 | **[Dev Container](#vs-code-dev-container)** | Standardized tooling | Docker Desktop + VS Code | Containerized consistency |
+| **[GitHub Actions](#github-actions)** | Automated CI/CD | Azure service principal | Federated identity, automated deployment |
 
 ### Local Machine
 Deploy with full control over your development environment.
@@ -268,6 +269,30 @@ Deploy from a containerized environment for team consistency.
 3. Reopen in container when prompted
 
 **Deployment**: All tools pre-installed - run [Deploy with AZD](#deploy-with-azd) commands directly
+
+### GitHub Actions
+Deploy using automated CI/CD pipeline with GitHub Actions and Azure federated identity.
+
+**Setup**:
+1. Fork or clone the repository to your GitHub account
+2. Configure [Azure service principal with federated identity credentials](https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure-openid-connect) for GitHub Actions (recommened)
+3. Set repository variables in GitHub:
+   - `AZURE_CLIENT_ID`: Service principal client ID
+   - `AZURE_TENANT_ID`: Azure tenant ID  
+   - `AZURE_SUBSCRIPTION_ID`: Target subscription ID
+   - `AZURE_ENV_NAME`: Environment name for resource naming
+
+**Optional Configuration Variables**:
+   - `FABRIC_WORKSPACE_ADMINISTRATORS`: Comma-separated admin identities
+   - `FABRIC_ACTIVATOR_ALERTS_EMAIL`: Email for alert notifications
+
+**Deployment**: 
+1. Navigate to **Actions** tab in your GitHub repository
+2. Select **CI/CD Azure - Real-Time Intelligence Operations** workflow
+3. Click **Run workflow** to trigger deployment
+4. Monitor deployment progress and view summary with Azure Portal links
+
+**Features**: Automated infrastructure validation, Bicep linting, environment-specific deployments, and comprehensive deployment summaries with direct Azure Portal links.
 
 ---
 
