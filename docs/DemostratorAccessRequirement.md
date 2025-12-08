@@ -1,11 +1,33 @@
-# Demonstrator's Access Requirements  
+# Demonstrator's Access Requirements
 
-If you deployed the solution accelerator via AZD following the [Deployment Guide](./DeploymentGuide.md), you have already established the required access to the solution, and **you can skip this Access Requirements section**, and start at [Step 1. Refresh Historical Data](#step-1-refresh-historical-data).
+To effectively demonstrate the Real-Time Intelligence Operations solution using a pre-configured environment, you must have the following permissions and access levels.
 
-If you are using a demonstration environment already set up by someone else, you will need below accesses: 
+## 1. Fabric Workspace Contributor Role
 
-1. You will need to be added as a contributor of the Fabric workspace. If you are a viewer, you will not be able to update any resources such as [Real-Time Intelligence Operations Dashboard](./RealTimeIntelligenceDashboardGuide.md) or [Activator](./ActivatorGuide.md). Recommend role: **contributor**. 
-2. You will need to change the rules in Activator with your own outlook email that you have access to. 
-3. You will need to be able to send simulated events to the Azure Event Hub deployed with the solution. The owner of the Event Hub or your Azure Admin can add you to the role of **Azure Event Hubs Data Sender**. Below diagram illustrates the key steps. 
+You must have atleast **contributor** level access to the Fabric workspace to modify resources, including:
+
+- [Real-Time Intelligence Operations Dashboard](./RealTimeIntelligenceDashboardGuide.md)
+- [Activator](./ActivatorGuide.md)
+
+> **Note:** Viewer-level access is insufficient for demonstration purposes.
+
+## 2. Configure Activator Rules
+
+Update the Activator rules with your Outlook email address to receive alert notifications.
+
+### Steps to Update Activator Rule Email Address
+
+1. Open the [Activator](./ActivatorGuide.md) in your Fabric workspace
+2. Navigate to the rule you wish to modify
+3. Locate the email notification settings on the right panel **Definations**
+4. Replace the existing email address with your Outlook email address
+5. Click **Save** to apply the changes
+6. Verify you have access to the updated email account to receive alerts
+
+## 3. Azure Event Hubs Data Sender Role
+
+To send simulated events to the Azure Event Hub, you must have the **Azure Event Hubs Data Sender** role assigned to your account. Contact either the Event Hub owner, or your Azure Administrator to request this role assignment.
+
+The diagram below illustrates the role assignment process:
 
 ![Event Hubs Data Sender Role](../docs/images/deployment/eventhubs-data-sender-role.png)
