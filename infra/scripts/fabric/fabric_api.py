@@ -25,6 +25,7 @@ import time
 import json
 import base64
 import requests
+import uuid
 from datetime import datetime
 from typing import Dict, List, Optional, Union, Any
 from azure.identity import AzureCliCredential, DefaultAzureCredential
@@ -2937,3 +2938,155 @@ class FabricWorkspaceApiClient(FabricApiClient):
         except Exception as e:
             self._log(f"❌ Unexpected error updating activator definition: {e}", level="ERROR")
             raise FabricApiError(f"Error updating activator definition: {e}")
+    
+    def create_data_agent(self, data_agent_name: str) -> Dict[str, Any]:
+        """
+        Create a new Data Agent in the workspace. Reference: https://pypi.org/project/fabric-data-agent-sdk/
+        
+        Args:
+            data_agent_name: The name of the Data Agent to be created.
+            
+        Returns:
+            Dictionary with data agent information including:
+            - id: Data agent ID (GUID)
+            - displayName: Data agent display name
+            - type: Item type ("DataAgent")
+            - workspaceId: Workspace ID (GUID)
+            
+        Raises:
+            FabricApiError: If creation fails
+            
+        Required Scopes:
+            DataAgent.ReadWrite.All or Item.ReadWrite.All
+            
+        Required Permissions:
+            Contributor workspace role or higher
+        """
+        try:
+            # Validate required parameters
+            if not data_agent_name or not data_agent_name.strip():
+                raise FabricApiError("data_agent_name is required and cannot be empty")
+            
+            self._log(f"Creating Data Agent '{data_agent_name}' in workspace {self.workspace_id}")
+            
+            # Build request payload following the pattern from the original function
+            data = {
+                "artifactType": "LLMPlugin",
+                "displayName": data_agent_name.strip()
+            }
+            
+            # Make the API request using the dataagents endpoint
+            response = self._make_request(
+                f"workspaces/{self.workspace_id}/dataagents", 
+                method="POST", 
+                data=data
+            )
+            
+            # Check response status
+            if response.status_code in [200, 201, 202]:
+                data_agent = response.json()
+                data_agent_id = data_agent.get('id')
+                
+                # If ID is not returned in response, get it by searching by name
+                if not data_agent_id:
+                    self._log(f"Data Agent ID not returned in response, searching by name")
+                    found_agent = self.get_data_agent_by_name(data_agent_name.strip())
+                    if found_agent and found_agent.get('id'):
+                        data_agent = found_agent
+                        data_agent_id = found_agent['id']
+                    else:
+                        raise FabricApiError(f"Data Agent '{data_agent_name}' was created but could not be found or retrieved")
+                
+                self._log(f"Successfully created Data Agent '{data_agent_name}' with ID: {data_agent_id}")
+                return data_agent
+            else:
+                raise FabricApiError(f"Failed to create Data Agent: HTTP {response.status_code}")
+                
+        except FabricApiError:
+            # Re-raise FabricApiError as-is
+            raise
+        except Exception as e:
+            raise FabricApiError(f"Unexpected error creating Data Agent '{data_agent_name}': {str(e)}")
+    
+    def get_data_agents(self) -> List[Dict[str, Any]]:
+        """
+        Get all Data Agents in the workspace.
+        
+        Returns:
+            List of data agent objects
+            
+        Raises:
+            FabricApiError: If listing fails
+            
+        Required Scopes:
+            DataAgent.Read.All or Item.Read.All
+            
+        Required Permissions:
+            Viewer workspace role or higher
+        """
+        try:
+            self._log(f"Getting Data Agents in workspace {self.workspace_id}")
+            
+            # Make the API request to list dataagents
+            response = self._make_request(
+                f"workspaces/{self.workspace_id}/dataagents", 
+                method="GET"
+            )
+            
+            # Check response status
+            if response.status_code == 200:
+                data_agents = response.json().get('value', [])
+                self._log(f"Found {len(data_agents)} Data Agent(s)")
+                return data_agents
+            else:
+                raise FabricApiError(f"Failed to list Data Agents: HTTP {response.status_code}")
+                
+        except FabricApiError:
+            # Re-raise FabricApiError as-is
+            raise
+        except Exception as e:
+            raise FabricApiError(f"Unexpected error listing Data Agents: {str(e)}")
+    
+    def get_data_agent_by_name(self, data_agent_name: str) -> Optional[Dict[str, Any]]:
+        """
+        Get a Data Agent by name from the workspace.
+        
+        Args:
+            data_agent_name: The name of the Data Agent to find.
+            
+        Returns:
+            Dictionary with data agent information if found, None otherwise
+            
+        Raises:
+            FabricApiError: If listing fails
+            
+        Required Scopes:
+            DataAgent.Read.All or Item.Read.All
+            
+        Required Permissions:
+            Viewer workspace role or higher
+        """
+        try:
+            # Validate required parameters
+            if not data_agent_name or not data_agent_name.strip():
+                raise FabricApiError("data_agent_name is required and cannot be empty")
+            
+            self._log(f"Searching for Data Agent '{data_agent_name}' in workspace {self.workspace_id}")
+            
+            # Get all data agents
+            data_agents = self.get_data_agents()
+            
+            # Find the data agent by name
+            for agent in data_agents:
+                if agent.get('displayName', '').strip() == data_agent_name.strip():
+                    self._log(f"Found Data Agent '{data_agent_name}' with ID: {agent.get('id', 'N/A')}")
+                    return agent
+            
+            self._log(f"Data Agent '{data_agent_name}' not found")
+            return None
+                
+        except FabricApiError:
+            # Re-raise FabricApiError as-is
+            raise
+        except Exception as e:
+            raise FabricApiError(f"Unexpected error searching for Data Agent '{data_agent_name}': {str(e)}")
