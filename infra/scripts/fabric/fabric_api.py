@@ -3555,8 +3555,7 @@ class FabricWorkspaceApiClient(FabricApiClient):
                                      environment_id: str,
                                      environment_yml_base64: Optional[str] = None,
                                      sparkcompute_yml_base64: Optional[str] = None,
-                                     platform_base64: Optional[str] = None,
-                                     update_metadata: bool = False) -> bool:
+                                     platform_base64: Optional[str] = None) -> bool:
         """
         Update the definition of an environment.
         
@@ -3565,10 +3564,12 @@ class FabricWorkspaceApiClient(FabricApiClient):
             environment_yml_base64: Optional base64 encoded environment.yml content
             sparkcompute_yml_base64: Optional base64 encoded Sparkcompute.yml content
             platform_base64: Optional base64 encoded .platform content
-            update_metadata: Whether to update metadata using .platform file
             
         Returns:
             True if update was successful, False otherwise
+        
+        Note:
+            update_metadata is automatically set to True if platform_base64 is provided, False otherwise
         """
         self._log(f"Updating definition for environment {environment_id}")
         
@@ -3602,10 +3603,13 @@ class FabricWorkspaceApiClient(FabricApiClient):
             
         request_body = {
             "definition": {
-                "format": "Environment",
+                "format": "null",
                 "parts": definition_parts
             }
         }
+        
+        # Auto-determine update_metadata based on platform_base64
+        update_metadata = platform_base64 is not None
         
         uri = f"workspaces/{self.workspace_id}/environments/{environment_id}/updateDefinition"
         if update_metadata:
