@@ -3,37 +3,86 @@
 Fabric Data Agent Setup Module
 
 This module provides Data Agent creation functionality for Microsoft Fabric operations.
-It creates a new Data Agent in the specified workspace.
+It creates a new Data Agent in the specified workspace, configures it with AI instructions,
+and creates/runs a configuration notebook.
 
 Usage:
-    python fabric_data_agent.py --workspace-id "workspace-guid" --data-agent-name "MyDataAgent"
+    python fabric_data_agent.py --workspace-id "workspace-guid" --data-agent-name "MyDataAgent" --kusto-db-id "kusto-db-id" --kusto-db-workspace-id "kusto-db-workspace-id"
 
 Requirements:
     - fabric_api.py module in the same directory
     - Azure CLI authentication or other Azure credentials configured
-    - Appropriate permissions to create Data Agents in the workspace
+    - Appropriate permissions to create Data Agents and notebooks in the workspace
 """
 
 import argparse
 import sys
+import os
+import json
+import base64
 from typing import Optional
 from fabric_api import FabricApiClient, FabricWorkspaceApiClient, FabricApiError
 
 
-def create_data_agent(workspace_client: FabricWorkspaceApiClient, 
-                      data_agent_name: str,
-                      kusto_db_id: Optional[str] = None,
-                      cluster_uri: Optional[str] = None,
-                      database_name: Optional[str] = None) -> dict:
+def read_file_content(file_path: str) -> str:
     """
-    Create a Data Agent in the workspace and optionally add a Kusto database data source.
+    Read content from a file.
+    
+    Args:
+        file_path: Path to the file to read
+        
+    Returns:
+        File content as string
+        
+    Raises:
+        FileNotFoundError: If file doesn't exist
+        Exception: If file can't be read
+    """
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        raise FileNotFoundError(f"File not found: {file_path}")
+    except Exception as e:
+        raise Exception(f"Error reading file {file_path}: {e}")
+
+
+def replace_tokens_in_content(content: str, tokens: dict) -> str:
+    """
+    Replace tokens in content with their values, properly escaping for JSON.
+    
+    Args:
+        content: Content with tokens to replace
+        tokens: Dictionary mapping token names to replacement values
+        
+    Returns:
+        Content with tokens replaced and properly escaped
+    """
+    for token, value in tokens.items():
+        # Escape the value for JSON if it's a string
+        if isinstance(value, str):
+            # Escape backslashes, quotes, and control characters
+            escaped_value = json.dumps(value)[1:-1]  # Remove surrounding quotes from json.dumps
+        else:
+            escaped_value = str(value)
+        content = content.replace(token, escaped_value)
+    return content
+
+
+def create_data_agent_and_configure(workspace_client: FabricWorkspaceApiClient, 
+                                   data_agent_name: str,
+                                   kusto_db_id: str,
+                                   kusto_db_workspace_id: str,
+                                   notebook_name: str) -> dict:
+    """
+    Create a Data Agent and configure it with a notebook.
     
     Args:
         workspace_client: Authenticated FabricWorkspaceApiClient instance
         data_agent_name: Name of the Data Agent to create
-        kusto_db_id: Optional ID of the Kusto database to connect as data source
-        cluster_uri: Optional URI of the Kusto cluster for schema retrieval
-        database_name: Optional name of the database for schema retrieval
+        kusto_db_id: ID of the Kusto database to connect as data source
+        kusto_db_workspace_id: ID of the workspace containing the Kusto database
+        notebook_name: Name of the configuration notebook to create
         
     Returns:
         dict: Data Agent information if successful
@@ -56,67 +105,122 @@ def create_data_agent(workspace_client: FabricWorkspaceApiClient,
             data_agent_id = data_agent.get('id', 'N/A')
             print(f"✅ Successfully created Data Agent: {data_agent_name} ({data_agent_id})")
         
-        # If a Kusto database ID is provided, add it as a data source
-        if kusto_db_id:
-            print(f"🔗 Adding Kusto database '{kusto_db_id}' as data source...")
-            try:
-                datasource = workspace_client.create_data_agent_data_source(
-                    data_agent_id=data_agent_id,
-                    data_source_id=kusto_db_id,
-                    data_source_type="kqldatabase"
-                )
-                datasource_id = datasource.get('id', 'N/A')
-                print(f"✅ Successfully added data source: {kusto_db_id} ({datasource_id})")
+        data_agent_id = data_agent.get('id')
+        
+        # Calculate repository directory (script is in infra/scripts/fabric/, so go up 3 levels)
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        repo_dir = os.path.dirname(os.path.dirname(os.path.dirname(script_dir)))
+        
+        # Read configuration files
+        print(f"📖 Reading configuration files from: {repo_dir}")
+        
+        # Paths to configuration files
+        notebook_path = os.path.join(repo_dir, "src", "notebooks", "configure_data_agent.ipynb")
+        agent_instructions_path = os.path.join(repo_dir, "src", "data_agent", "agent_instructions.md")
+        data_source_description_path = os.path.join(repo_dir, "src", "data_agent", "data_source_description.md")
+        data_source_instructions_path = os.path.join(repo_dir, "src", "data_agent", "data_source_instructions.md")
+        query_examples_path = os.path.join(repo_dir, "src", "data_agent", "query_examples.json")
+        
+        # Read all configuration files
+        notebook_content = read_file_content(notebook_path)
+        agent_instructions = read_file_content(agent_instructions_path)
+        data_source_description = read_file_content(data_source_description_path)
+        data_source_instructions = read_file_content(data_source_instructions_path)
+        query_examples_json = read_file_content(query_examples_path)
+        
+        print(f"✅ Successfully read all configuration files")
+        
+        # Parse query examples JSON to Python dict format for replacement
+        query_examples_dict = json.loads(query_examples_json)
+        query_examples_python = str(query_examples_dict)
+        
+        # Replace tokens in notebook content
+        print(f"🔄 Replacing configuration tokens...")
+        tokens = {
+            "__AGENT_ID__": data_agent_id,
+            "__KQL_DATABASE_ID__": kusto_db_id,
+            "__KQL_DATABASE_WORKSPACE_ID__": kusto_db_workspace_id,
+            "__AGENT_INSTRUCTIONS__": agent_instructions,
+            "__DATA_SOURCE_INSTRUCTIONS__": data_source_instructions,
+            "__DATA_SOURCE_DESCRIPTION__": data_source_description,
+            "__QUERY_EXAMPLES__": query_examples_python
+        }
+        
+        configured_notebook_content = replace_tokens_in_content(notebook_content, tokens)
+        print(f"✅ Successfully replaced configuration tokens")
+        
+        # Create or update notebook
+        print(f"📓 Creating/updating notebook: '{notebook_name}'")
+        
+        # Check if notebook already exists
+        existing_notebook = workspace_client.get_notebook_by_name(notebook_name)
+        
+        # Parse and encode notebook content as base64
+        notebook_json = json.loads(configured_notebook_content)
+        notebook_base64 = base64.b64encode(
+            json.dumps(notebook_json).encode('utf-8')
+        ).decode('utf-8')
+        
+        if existing_notebook:
+            # Update existing notebook
+            notebook_id = existing_notebook.get('id')
+            print(f"ℹ️  Notebook '{notebook_name}' already exists, updating...")
+            # response = workspace_client.update_notebook(notebook_id, notebook_name, notebook_base64)
+            print(f"✅ Successfully updated notebook: {notebook_name}")
+        else:
+            # Create new notebook
+            response = workspace_client.create_notebook(notebook_name, notebook_base64)
+            if response.status_code in [200, 201, 202]:
+                # Extract notebook ID from response
+                if response.content:
+                    response_data = response.json()
+                    notebook_id = response_data.get('id')
+                else:
+                    # If no response content, get notebook by name
+                    created_notebook = workspace_client.get_notebook_by_name(notebook_name)
+                    notebook_id = created_notebook.get('id') if created_notebook else None
                 
-                # If cluster URI and database name are provided, retrieve and display schema
-                if cluster_uri and database_name:
-                    print(f"📊 Retrieving schema for database '{database_name}'...")
-                    try:
-                        schema = workspace_client.get_kql_database_schema(
-                            cluster_uri=cluster_uri,
-                            database_name=database_name
-                        )
-                        
-                        print(f"✅ Successfully retrieved schema for database '{database_name}'")
-                        print(f"   Tables found: {len(schema.get('tables', {}))}")
-                        
-                        # Display table information
-                        for table_name, table_info in schema.get('tables', {}).items():
-                            column_count = len(table_info.get('columns', []))
-                            print(f"   - {table_name}: {column_count} columns")
-                            
-                    except FabricApiError as e:
-                        print(f"⚠️ Warning: Failed to retrieve schema: {e}")
-                        
-            except FabricApiError as e:
-                print(f"⚠️ Warning: Failed to add data source '{kusto_db_id}': {e}")
-                print("Data Agent was created successfully, but without the data source.")
+                print(f"✅ Successfully created notebook: {notebook_name} ({notebook_id})")
+            else:
+                raise FabricApiError(f"Failed to create notebook: HTTP {response.status_code}")
+        
+        # Run the notebook
+        print(f"▶️  Running configuration notebook...")
+        job_result = workspace_client.schedule_notebook_job(notebook_id)
+        
+        print(f"📊 Notebook execution completed:")
+        print(f"   Status: {job_result.get('status')}")
+        print(f"   Duration: {job_result.get('duration')}")
+        
+        if job_result.get('status') != 'Completed':
+            if 'error' in job_result:
+                print(f"   Error: {job_result.get('error')}")
+            raise FabricApiError(f"Notebook execution failed with status: {job_result.get('status')}")
+        
+        print(f"✅ Data Agent configuration completed successfully!")
         
         return data_agent
         
     except FabricApiError as e:
-        print(f"❌ Failed to create Data Agent '{data_agent_name}': {e}")
+        print(f"❌ Failed to create/configure Data Agent '{data_agent_name}': {e}")
         raise
     except Exception as e:
-        print(f"❌ Unexpected error creating Data Agent '{data_agent_name}': {e}")
+        print(f"❌ Unexpected error creating/configuring Data Agent '{data_agent_name}': {e}")
         raise FabricApiError(f"Error creating Data Agent: {e}")
 
 
 def main():
-    """Main function to create a Data Agent and optionally add a data source."""
+    """Main function to create a Data Agent and configure it via notebook."""
     parser = argparse.ArgumentParser(
-        description="Create a Microsoft Fabric Data Agent with optional Kusto database data source",
+        description="Create a Microsoft Fabric Data Agent and configure it with AI instructions via notebook",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Create Data Agent only
-  python fabric_data_agent.py --workspace-id "12345678-1234-1234-1234-123456789012" --data-agent-name "Operations Agent"
+  # Create and configure Data Agent with default notebook name
+  python fabric_data_agent.py --workspace-id "12345678-1234-1234-1234-123456789012" --data-agent-name "Operations Agent" --kusto-db-id "87654321-4321-4321-4321-210987654321" --kusto-db-workspace-id "87654321-4321-4321-4321-210987654321"
   
-  # Create Data Agent with Kusto database data source
-  python fabric_data_agent.py --workspace-id "12345678-1234-1234-1234-123456789012" --data-agent-name "Operations Agent" --kusto-db-id "87654321-4321-4321-4321-210987654321"
-  
-  # Create Data Agent with data source and retrieve schema
-  python fabric_data_agent.py --workspace-id "12345678-1234-1234-1234-123456789012" --data-agent-name "Operations Agent" --kusto-db-id "87654321-4321-4321-4321-210987654321" --cluster-uri "https://cluster.kusto.windows.net" --database-name "manufacturing_db"
+  # Create and configure Data Agent with custom notebook name
+  python fabric_data_agent.py --workspace-id "12345678-1234-1234-1234-123456789012" --data-agent-name "Operations Agent" --kusto-db-id "87654321-4321-4321-4321-210987654321" --kusto-db-workspace-id "87654321-4321-4321-4321-210987654321" --notebook-name "My Custom Agent Config"
         """
     )
     
@@ -134,42 +238,48 @@ Examples:
     
     parser.add_argument(
         "--kusto-db-id", 
-        required=False, 
-        help="Optional ID of the Kusto database to add as a data source"
+        required=True, 
+        help="ID of the Kusto database to add as a data source"
     )
     
     parser.add_argument(
-        "--cluster-uri", 
-        required=False, 
-        help="Optional URI of the Kusto cluster for schema retrieval (e.g., 'https://cluster.kusto.windows.net')"
+        "--kusto-db-workspace-id", 
+        required=True, 
+        help="ID of the workspace containing the Kusto database"
     )
     
     parser.add_argument(
-        "--database-name", 
-        required=False, 
-        help="Optional name of the database for schema retrieval"
+        "--notebook-name", 
+        required=False,
+        default=None,
+        help="Name of the configuration notebook (default: 'Configure Data Agent - <data-agent-name>')"
     )
     
     # Parse arguments
     args = parser.parse_args()
     
+    # Set default notebook name if not provided
+    notebook_name = args.notebook_name or f"Configure Data Agent - {args.data_agent_name}"
+    
     # Create workspace client
     try:
         workspace_client = FabricWorkspaceApiClient(workspace_id=args.workspace_id)
         
-        # Create the Data Agent with optional data source
-        result = create_data_agent(
+        # Create the Data Agent and configure it
+        result = create_data_agent_and_configure(
             workspace_client=workspace_client,
             data_agent_name=args.data_agent_name,
             kusto_db_id=args.kusto_db_id,
-            cluster_uri=args.cluster_uri,
-            database_name=args.database_name
+            kusto_db_workspace_id=args.kusto_db_workspace_id,
+            notebook_name=notebook_name
         )
         
-        print(f"\n✅ Data Agent ID: {result.get('id', 'N/A')}")
-        print(f"✅ Data Agent Name: {args.data_agent_name}")
-        if args.kusto_db_id:
-            print(f"✅ Kusto Database ID: {args.kusto_db_id}")
+        print(f"\n🎉 Final Results:")
+        print(f"   Data Agent ID: {result.get('id', 'N/A')}")
+        print(f"   Data Agent Name: {args.data_agent_name}")
+        print(f"   KQL Database ID: {args.kusto_db_id}")
+        print(f"   Configuration Status: Complete")
+        print(f"   Ready for use in Microsoft Fabric!")
         
     except FabricApiError as e:
         print(f"❌ Fabric API Error: {e}")
