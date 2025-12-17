@@ -24,7 +24,7 @@ script_dir = Path(__file__).parent
 scripts_dir = script_dir.parent
 sys.path.insert(0, str(scripts_dir))
 
-from azure.identity import DefaultAzureCredential
+from azure.identity import DefaultAzureCredential, AzureCliCredential
 from azure.kusto.data import KustoClient, KustoConnectionStringBuilder, ClientRequestProperties
 from azure.kusto.data.exceptions import KustoServiceError
 
@@ -44,8 +44,18 @@ def create_kusto_client(cluster_uri) -> KustoClient:
     """
     try:
         
+        # Allow forcing Azure CLI auth (useful in bash/Cloud Shell) by setting
+        # AZURE_AUTH_MODE=cli. Otherwise, use DefaultAzureCredential.
+        auth_mode = os.getenv("AZURE_AUTH_MODE", "default").lower()
+        
+        if auth_mode == "cli":
+            print("Using AzureCliCredential for Kusto authentication (AZURE_AUTH_MODE=cli)")
+            credential = AzureCliCredential()
+        else:
+            print("Using DefaultAzureCredential for Kusto authentication")
+            credential = DefaultAzureCredential()
+        
         print(f"Connecting to Fabric cluster: {cluster_uri}")
-        credential = DefaultAzureCredential()
         kcsb = KustoConnectionStringBuilder.with_azure_token_credential(cluster_uri, credential)
         client = KustoClient(kcsb)
         print(f"✅ Connected to Fabric cluster")
