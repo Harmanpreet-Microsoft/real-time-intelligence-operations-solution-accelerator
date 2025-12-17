@@ -576,15 +576,6 @@ Data pipeline orchestration:
 
 ![Eventstream data flow configuration](./images/deployment/deployment_overview_fabric_eventstream.png)
 
-#### Fabric Environment
-
-Library and compute environment management:
-
-- **Name:** `rti_environment_<env-name><suffix>`
-- **Type:** Fabric Environment for managing Python libraries and dependencies
-- **Configuration:** Pre-configured with required libraries from environment.yml
-- **Purpose:** Provides consistent compute environment for Data Agent operations
-
 #### Data Agent
 
 AI-powered conversational data interface:
@@ -593,15 +584,40 @@ AI-powered conversational data interface:
 - **Type:** Fabric Data Agent for natural language queries
 - **Connected Database:** KQL Database for real-time analytics
 
+![Data Agent overview](./images/deployment/deployment_overview_fabric_dataagent.png)
+
 #### Folder with Data Agent configuration scripts
 
-Folder with script to set up Data Agent configuration (Preview)
+Folder with script to set up Data Agent configuration
 
-- **Notebook:** `rti_notebook_<env-name><suffix>` for configuration and examples
 - **Folder:** `rti_dataagentconfig_<env-name><suffix>` for organizational structure
-- **Purpose:** Enables natural language questions about operational data
+- **Purpose:** Container to host assets to configure the Data Agent
+
+![Data Agent configuration folder](./images/deployment/deployment_overview_fabric_dataagent_configuration_folder.png)
+
+#### Data agent configuration Environment
+
+Library and compute environment management:
+
+- **Name:** `rti_environment_<env-name><suffix>`
+- **Type:** Fabric Environment for managing Python libraries and dependencies
+- **Configuration:** Pre-configured with required libraries from environment.yml
+- **Purpose:** Provides compute environment and libraries set up for Data Agent configuration runbook
+
+![Data Agent configuration folder](./images/deployment/deployment_overview_fabric_dataagent_configuration_environment.png)
+
+#### Data agent configuration Notebook (Preview)
+
+Library and compute environment management:
+
+- **Name:** `rti_notebook_<env-name><suffix>`
+- **Type:** Fabric Environment for managing Python libraries and dependencies
+- **Configuration:** Pre-configured with required code to set up Data Agent
+- **Purpose:** Provides automation to set up configuration of the Data Agent
 
 > **Note:** Data Agent configuration script is a Preview feature and may have limitations. If automated setup fails, refer to the [Fabric Data Agent Guide](./FabricDataAgentGuide.md) for manual configuration.
+
+![Data Agent configuration notebook](./images/deployment/deployment_overview_fabric_dataagent_configuration_notebook.png)
 
 ---
 
