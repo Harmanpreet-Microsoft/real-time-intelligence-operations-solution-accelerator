@@ -97,16 +97,17 @@ def create_data_agent_and_configure(workspace_client: FabricWorkspaceApiClient,
         # Check if Data Agent already exists
         existing_agent = workspace_client.get_data_agent_by_name(data_agent_name)
         if existing_agent:
-            data_agent_id = existing_agent.get('id', 'N/A')
-            print(f"ℹ️  Data Agent '{data_agent_name}' already exists with ID: {data_agent_id}")
             data_agent = existing_agent
+            print(f"ℹ️  Data Agent '{data_agent_name}' already exists")
         else:
             # Create the Data Agent
             data_agent = workspace_client.create_data_agent(data_agent_name)
-            data_agent_id = data_agent.get('id', 'N/A')
-            print(f"✅ Successfully created Data Agent: {data_agent_name} ({data_agent_id})")
+            print(f"✅ Successfully created Data Agent: {data_agent_name}")
         
+        # Get data agent ID and fail if not found
         data_agent_id = data_agent.get('id')
+        if not data_agent_id:
+            raise FabricApiError(f"Failed to retrieve Data Agent ID for '{data_agent_name}'")
         
         # Calculate repository directory (script is in infra/scripts/fabric/, so go up 3 levels)
         script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -156,7 +157,7 @@ def create_data_agent_and_configure(workspace_client: FabricWorkspaceApiClient,
         print(f"📓 Creating/updating notebook: '{notebook_name}'")
         
         # Check if notebook already exists
-        existing_notebook = workspace_client.get_notebook_by_name(notebook_name)
+        notebook = workspace_client.get_notebook_by_name(notebook_name)
         
         # Parse and encode notebook content as base64
         notebook_json = json.loads(configured_notebook_content)
@@ -164,28 +165,21 @@ def create_data_agent_and_configure(workspace_client: FabricWorkspaceApiClient,
             json.dumps(notebook_json).encode('utf-8')
         ).decode('utf-8')
         
-        if existing_notebook:
+        if notebook:
             # Update existing notebook
-            notebook_id = existing_notebook.get('id')
+            notebook_id = notebook.get('id')
+            if not notebook_id:
+                raise FabricApiError(f"Failed to retrieve notebook ID for existing notebook '{notebook_name}'")
             print(f"ℹ️  Notebook '{notebook_name}' already exists, updating...")
-            # response = workspace_client.update_notebook(notebook_id, notebook_name, notebook_base64)
-            print(f"✅ Successfully updated notebook: {notebook_name}")
+            workspace_client.update_notebook(notebook_id, notebook_name, notebook_base64)
+            print(f"✅ Successfully updated notebook: {notebook_name} ({notebook_id})")
         else:
             # Create new notebook
-            response = workspace_client.create_notebook(notebook_name, notebook_base64)
-            if response.status_code in [200, 201, 202]:
-                # Extract notebook ID from response
-                if response.content:
-                    response_data = response.json()
-                    notebook_id = response_data.get('id')
-                else:
-                    # If no response content, get notebook by name
-                    created_notebook = workspace_client.get_notebook_by_name(notebook_name)
-                    notebook_id = created_notebook.get('id') if created_notebook else None
-                
-                print(f"✅ Successfully created notebook: {notebook_name} ({notebook_id})")
-            else:
-                raise FabricApiError(f"Failed to create notebook: HTTP {response.status_code}")
+            notebook = workspace_client.create_notebook(notebook_name, notebook_base64)
+            notebook_id = notebook.get('id')
+            if not notebook_id:
+                raise FabricApiError(f"Failed to retrieve notebook ID for created notebook '{notebook_name}'")
+            print(f"✅ Successfully created notebook: {notebook_name} ({notebook_id})")
         
         # Run the notebook
         print(f"▶️  Running configuration notebook...")

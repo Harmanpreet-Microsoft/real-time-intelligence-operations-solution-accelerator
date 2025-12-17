@@ -3119,7 +3119,7 @@ class FabricWorkspaceApiClient(FabricApiClient):
         except Exception as e:
             raise FabricApiError(f"Unexpected error listing notebooks: {str(e)}")
     
-    def create_notebook(self, notebook_name: str, notebook_data_base64: str, folder_id: Optional[str] = None, wait_for_lro: bool = True) -> requests.Response:
+    def create_notebook(self, notebook_name: str, notebook_data_base64: str, folder_id: Optional[str] = None, wait_for_lro: bool = True) -> Dict[str, Any]:
         """
         Create a new notebook in the workspace.
         
@@ -3130,10 +3130,10 @@ class FabricWorkspaceApiClient(FabricApiClient):
             wait_for_lro: Whether to wait for long running operations to complete
             
         Returns:
-            API response
+            Dictionary with notebook information including ID
             
         Raises:
-            FabricApiError: If creation fails
+            FabricApiError: If creation fails or ID cannot be retrieved
         """
         try:
             self._log(f"Creating notebook '{notebook_name}' in workspace {self.workspace_id}")
@@ -3155,12 +3155,32 @@ class FabricWorkspaceApiClient(FabricApiClient):
             if folder_id:
                 notebook_data["folderId"] = folder_id
             
-            return self._make_request(
+            response = self._make_request(
                 f"workspaces/{self.workspace_id}/notebooks", 
                 method="POST", 
                 data=notebook_data, 
                 wait_for_lro=wait_for_lro
             )
+            
+            if response.status_code in [200, 201, 202]:
+                # Try to get ID from response
+                notebook_obj = None
+                if response.content:
+                    response_data = response.json()
+                    if 'id' in response_data:
+                        notebook_obj = response_data
+                
+                # If no ID in response, get notebook by name
+                if not notebook_obj or 'id' not in notebook_obj:
+                    notebook_obj = self.get_notebook_by_name(notebook_name)
+                
+                # Ensure we have a notebook object with ID
+                if not notebook_obj or 'id' not in notebook_obj:
+                    raise FabricApiError(f"Failed to retrieve notebook ID after creation for '{notebook_name}'")
+                
+                return notebook_obj
+            else:
+                raise FabricApiError(f"Failed to create notebook: HTTP {response.status_code}")
                 
         except FabricApiError:
             raise
