@@ -15,9 +15,9 @@ updates:
         patterns:
           - "*"
 
-  # Python backend dependencies - grouped
+  # Python dependencies - grouped
   - package-ecosystem: "pip"
-    directory: "/src/api"
+    directory: "/"
     schedule:
       interval: "monthly"
     target-branch: "dependabotchanges"
@@ -25,28 +25,8 @@ updates:
       prefix: "build"
     open-pull-requests-limit: 10
     groups:
-      backend-deps:
+      python-deps:
         patterns:
           - "*"
-
-  # Frontend npm dependencies - grouped
-  - package-ecosystem: "npm"
-    directory: "/src/App"
-    schedule:
-      interval: "monthly"
-    target-branch: "dependabotchanges"
-    commit-message:
-      prefix: "build"
-    open-pull-requests-limit: 10
-    # registries:
-    #   - npm_public_registry
-    groups:
-      frontend-deps:
-        patterns:
-          - "*"
-
-# registries:
-#   npm_public_registry:
-#     type: "npm-registry"
 #     url: "https://registry.npmjs.org/"
 #     token: ${{ secrets.TOKEN }}
