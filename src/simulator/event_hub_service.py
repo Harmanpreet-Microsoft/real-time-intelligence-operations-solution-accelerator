@@ -2,7 +2,7 @@ import json
 
 try:
     from azure.eventhub import EventHubProducerClient, EventData
-    from azure.identity import DefaultAzureCredential
+    from azure.identity import AzureCliCredential
 except ImportError:
     print("❌ Error: azure-eventhub and azure-identity packages are required.")
     print("Install them using: pip install azure-eventhub azure-identity")
@@ -12,7 +12,7 @@ class EventHubService:
     def __init__(self, fully_qualified_namespace: str, event_hub_name: str):
         self.fully_qualified_namespace = fully_qualified_namespace
         self.event_hub_name = event_hub_name
-        self.credential = DefaultAzureCredential()
+        self.credential = AzureCliCredential()
 
     def send_event(self, data: object):
         producer = EventHubProducerClient(
