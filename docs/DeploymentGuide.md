@@ -145,10 +145,10 @@ Select one of the following options to deploy the solution:
 
 ### Option A: GitHub Codespaces
 
-1. Go to the [Real-Time Intelligence Operations repository](https://github.com/microsoft/real-time-intelligence-operations-solution-accelerator)
-2. Click **Code** → **Codespaces** → **Create codespace on main**
-3. Wait for the environment to initialize (2-3 minutes)
-4. All tools are pre-installed; proceed to [Step 4: Deploy](#step-4-deploy-the-solution)
+1. Go to the [Real-Time Intelligence Operations repository in GitHub Codespaces](https://codespaces.new/microsoft/real-time-intelligence-operations-solution-accelerator)
+2. Follow the instructions on screen to create a new codespace with default setup.
+2. Wait for the environment to initialize (2-3 minutes)
+3. All tools are pre-installed; proceed to [Step 4: Deploy](#step-4-deploy-the-solution)
 
 ### Option B: VS Code Dev Container
 
