@@ -476,20 +476,35 @@ def main():
     # Get configuration from environment variables or arguments
     event_hub_namespace_fqdn = os.getenv('AZURE_EVENT_HUB_NAMESPACE_HOSTNAME')
     event_hub_name = os.getenv('AZURE_EVENT_HUB_NAME')
-    assets_csv_path = args.assets_csv or os.getenv('ASSETS_CSV_PATH', data_dir / 'assets.csv')
-    products_csv_path = args.products_csv or os.getenv('PRODUCTS_CSV_PATH', data_dir / 'products.csv')
+    assets_csv_path = args.assets_csv or os.getenv(
+        'ASSETS_CSV_PATH', data_dir / 'assets.csv'
+    )
+    products_csv_path = args.products_csv or os.getenv(
+        'PRODUCTS_CSV_PATH', data_dir / 'products.csv'
+    )
     interval = args.interval or float(os.getenv('SIMULATION_INTERVAL', '5.0'))
     max_runtime = args.max_runtime or (int(os.getenv('MAX_RUNTIME_SECONDS')) if os.getenv('MAX_RUNTIME_SECONDS') else None)
 
     # Validate required configuration
     if not event_hub_namespace_fqdn:
-        print("❌ ERROR: AZURE_EVENT_HUB_NAMESPACE_HOSTNAME environment variable is required")
-        print("Set it using: export AZURE_EVENT_HUB_NAMESPACE_HOSTNAME='your_namespace.servicebus.windows.net' or in Powershell: $env:AZURE_EVENT_HUB_NAMESPACE_HOSTNAME='your_namespace.servicebus.windows.net'")
+        print(
+            "❌ ERROR: AZURE_EVENT_HUB_NAMESPACE_HOSTNAME "
+            "environment variable is required"
+        )
+        print(
+            "Set it using: export "
+            "AZURE_EVENT_HUB_NAMESPACE_HOSTNAME='your_namespace.servicebus.windows.net' "
+            "or in Powershell: "
+            "$env:AZURE_EVENT_HUB_NAMESPACE_HOSTNAME='your_namespace.servicebus.windows.net'"
+        )
         sys.exit(1)
     
     if not event_hub_name:
         print("❌ ERROR: AZURE_EVENT_HUB_NAME environment variable is required")
-        print("Set it using: export AZURE_EVENT_HUB_NAME='your_event_hub_name' or in Powershell: $env:AZURE_EVENT_HUB_NAME='your_event_hub_name'")
+        print(
+            "Set it using: export AZURE_EVENT_HUB_NAME='your_event_hub_name' "
+            "or in Powershell: $env:AZURE_EVENT_HUB_NAME='your_event_hub_name'"
+        )
         sys.exit(1)
     
     # Convert relative paths to absolute
