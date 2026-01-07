@@ -382,12 +382,11 @@ def main():
     
     print_step(11, 14, "Updating Eventstream Definition", workspace_id=workspace_id, eventstream_id=eventstream_id, eventhouse_database_name=eventhouse_database_name)
     try:
-        eventstream_definition_result = setup_eventstream_definition(
         # Create destination-friendly names (without underscores) for eventstream
         eventhouse_destination_name = eventhouse_name.replace('_', '-')
         activator_destination_name = activator_name.replace('_', '-')
         
-        eventstream_definition_result = update_eventstream_definition(
+        eventstream_definition_result = setup_eventstream_definition(
             workspace_client=workspace_client,
             workspace_id=workspace_id,
             eventstream_id=eventstream_result.get('id') if eventstream_result else None,
